@@ -28,6 +28,34 @@ import subprocess
 import importlib
 import platform
 
+VERSAO_ATUAL = "4.1"
+
+URL_VERSAO = "https://raw.githubusercontent.com/contatopedrodinizx-commits/audifix/main/version.txt"
+
+URL_DOWNLOAD = "https://github.com/contatopedrodinizx-commits/audifix/releases/latest"
+
+def verificar_atualizacao():
+    try:
+        resposta = requests.get(URL_VERSAO, timeout=5)
+        versao_online = resposta.text.strip()
+
+        if versao_online != VERSAO_ATUAL:
+
+            root = tk.Tk()
+            root.withdraw()
+
+            atualizar = messagebox.askyesno(
+                "Atualização disponível",
+                f"Nova versão {versao_online} disponível!\n\nDeseja atualizar agora?"
+            )
+
+            if atualizar:
+                webbrowser.open(URL_DOWNLOAD)
+
+    except Exception as erro:
+        print(erro)
+
+verificar_atualizacao()
 
 # ─── Ocultar console no Windows (fallback caso rode como .py) ────────────────
 if platform.system() == "Windows":
