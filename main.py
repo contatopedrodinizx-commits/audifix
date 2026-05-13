@@ -27,8 +27,13 @@ import os
 import subprocess
 import importlib
 import platform
+import requests
+import requests
+import tkinter as tk
+from tkinter import messagebox
+import webbrowser
 
-VERSAO_ATUAL = "4.1"
+VERSAO_ATUAL = "4.0"
 
 URL_VERSAO = "https://raw.githubusercontent.com/contatopedrodinizx-commits/audifix/main/version.txt"
 
