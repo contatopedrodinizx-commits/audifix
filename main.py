@@ -15,7 +15,7 @@ import tkinter as tk
 from tkinter import ttk, filedialog, messagebox, font as tkfont
 
 # ─── Versão ───────────────────────────────────────────────────────────────────
-VERSAO_ATUAL = "5.0"
+VERSAO_ATUAL = "5.1"
 GITHUB_REPO  = "contatopedrodinizx-commits/audifix"
 URL_DOWNLOAD = f"https://github.com/{GITHUB_REPO}/releases/latest"
 
@@ -26,7 +26,7 @@ if platform.system() == "Windows":
         ctypes.windll.user32.ShowWindow(ctypes.windll.kernel32.GetConsoleWindow(), 0)
     except Exception:
         pass
-
+#teste
 
 # ─── Helpers de instalação ────────────────────────────────────────────────────
 def _pip_install(*packages):
