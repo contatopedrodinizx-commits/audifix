@@ -15,7 +15,7 @@ import tkinter as tk
 from tkinter import ttk, filedialog, messagebox, font as tkfont
 
 # ─── Versão ───────────────────────────────────────────────────────────────────
-VERSAO_ATUAL = "5.1"
+VERSAO_ATUAL = "5.2"
 GITHUB_REPO  = "contatopedrodinizx-commits/audifix"
 URL_DOWNLOAD = f"https://github.com/{GITHUB_REPO}/releases/latest"
 
@@ -26,7 +26,6 @@ if platform.system() == "Windows":
         ctypes.windll.user32.ShowWindow(ctypes.windll.kernel32.GetConsoleWindow(), 0)
     except Exception:
         pass
-#teste
 
 # ─── Helpers de instalação ────────────────────────────────────────────────────
 def _pip_install(*packages):
@@ -100,14 +99,14 @@ NOISE_COLORS = {
     "Azul": "#38bdf8", "Violeta": "#c084fc", "Cinza": "#94a3b8",
 }
 
-FONT_TITLE  = ("Segoe UI", 18, "bold")   # compactado de 22 → 18
-FONT_LABEL  = ("Segoe UI", 9)            # compactado de 10 → 9
-FONT_BOLD   = ("Segoe UI", 9, "bold")    # compactado de 10 → 9
-FONT_MONO   = ("Consolas", 8)            # compactado de 9 → 8
-FONT_STATUS = ("Segoe UI", 8)            # compactado de 9 → 8
-FONT_SMALL  = ("Segoe UI", 7)            # compactado de 8 → 7
-FONT_H3     = ("Segoe UI", 8, "bold")    # compactado de 9 → 8
-FONT_TAB    = ("Segoe UI", 9, "bold")    # compactado de 10 → 9
+FONT_TITLE  = ("Segoe UI", 18, "bold")
+FONT_LABEL  = ("Segoe UI", 9)
+FONT_BOLD   = ("Segoe UI", 9, "bold")
+FONT_MONO   = ("Consolas", 8)
+FONT_STATUS = ("Segoe UI", 8)
+FONT_SMALL  = ("Segoe UI", 7)
+FONT_H3     = ("Segoe UI", 8, "bold")
+FONT_TAB    = ("Segoe UI", 9, "bold")
 INPUT_FG    = "black"
 INPUT_BG    = "#f0f0f5"
 
@@ -116,52 +115,199 @@ _FFMPEG_OK  = False
 _WHISPER_OK = False
 _GTTS_OK    = False
 
-# ─── TTS ─────────────────────────────────────────────────────────────────────
+# ─── TTS — Vozes expandidas ───────────────────────────────────────────────────
+# Cada entrada define:
+#   lang   → código de idioma gTTS
+#   tld    → domínio regional Google (afeta sotaque)
+#   pitch  → fator de pitch shift (>1 = mais agudo/feminino, <1 = mais grave/masculino)
+#   rate   → fator de velocidade de fala (1.0 = normal, <1 = mais lento, >1 = mais rápido)
+#   eq     → filtro EQ extra ffmpeg (bass/treble boost para naturalidade) ou "" vazio
+#   gender → "F" ou "M" (usado para agrupamento visual na UI)
 TTS_VOICES = {
-    "Feminina — Português BR":  {"lang": "pt", "tld": "com.br", "pitch": 1.10},
-    "Masculina — Português BR": {"lang": "pt", "tld": "com.br", "pitch": 0.82},
-    "Feminina — Português PT":  {"lang": "pt", "tld": "pt",     "pitch": 1.08},
-    "Masculina — Português PT": {"lang": "pt", "tld": "pt",     "pitch": 0.80},
-    "Feminina — Inglês US":     {"lang": "en", "tld": "com",    "pitch": 1.10},
-    "Masculina — Inglês US":    {"lang": "en", "tld": "com",    "pitch": 0.80},
-    "Feminina — Inglês UK":     {"lang": "en", "tld": "co.uk",  "pitch": 1.12},
-    "Masculina — Inglês UK":    {"lang": "en", "tld": "co.uk",  "pitch": 0.78},
-    "Feminina — Espanhol":      {"lang": "es", "tld": "com",    "pitch": 1.10},
-    "Masculina — Espanhol":     {"lang": "es", "tld": "com",    "pitch": 0.82},
-    "Feminina — Francês":       {"lang": "fr", "tld": "fr",     "pitch": 1.10},
-    "Masculina — Francês":      {"lang": "fr", "tld": "fr",     "pitch": 0.80},
+    # ── Português BR ──────────────────────────────────────────────────────────
+    "🇧🇷 Feminina Natural — PT-BR":     {"lang":"pt","tld":"com.br","pitch":1.12,"rate":1.00,"eq":"treble=g=3:f=6000",           "gender":"F"},
+    "🇧🇷 Feminina Jovem — PT-BR":       {"lang":"pt","tld":"com.br","pitch":1.22,"rate":1.05,"eq":"treble=g=5:f=7000",           "gender":"F"},
+    "🇧🇷 Feminina Suave — PT-BR":       {"lang":"pt","tld":"com.br","pitch":1.08,"rate":0.93,"eq":"bass=g=2:f=120",              "gender":"F"},
+    "🇧🇷 Feminina Animada — PT-BR":     {"lang":"pt","tld":"com.br","pitch":1.18,"rate":1.10,"eq":"treble=g=4:f=8000",           "gender":"F"},
+    "🇧🇷 Feminina Grave — PT-BR":       {"lang":"pt","tld":"com.br","pitch":1.00,"rate":0.97,"eq":"bass=g=3:f=200",              "gender":"F"},
+    "🇧🇷 Feminina Radialista — PT-BR":  {"lang":"pt","tld":"com.br","pitch":1.14,"rate":1.03,"eq":"treble=g=2:f=5500,bass=g=1:f=180","gender":"F"},
+    "🇧🇷 Masculina Natural — PT-BR":    {"lang":"pt","tld":"com.br","pitch":0.82,"rate":1.00,"eq":"bass=g=4:f=150",              "gender":"M"},
+    "🇧🇷 Masculina Grave — PT-BR":      {"lang":"pt","tld":"com.br","pitch":0.72,"rate":0.95,"eq":"bass=g=6:f=100",              "gender":"M"},
+    "🇧🇷 Masculina Jovem — PT-BR":      {"lang":"pt","tld":"com.br","pitch":0.88,"rate":1.05,"eq":"bass=g=2:f=180",              "gender":"M"},
+    "🇧🇷 Masculina Suave — PT-BR":      {"lang":"pt","tld":"com.br","pitch":0.85,"rate":0.92,"eq":"bass=g=5:f=120",              "gender":"M"},
+    "🇧🇷 Masculina Animada — PT-BR":    {"lang":"pt","tld":"com.br","pitch":0.90,"rate":1.08,"eq":"treble=g=2:f=5000",           "gender":"M"},
+    "🇧🇷 Masculina Profunda — PT-BR":   {"lang":"pt","tld":"com.br","pitch":0.68,"rate":0.90,"eq":"bass=g=8:f=80",               "gender":"M"},
+    "🇧🇷 Narrador — PT-BR":             {"lang":"pt","tld":"com.br","pitch":0.78,"rate":0.94,"eq":"bass=g=3:f=130,treble=g=1:f=5000","gender":"M"},
+    "🇧🇷 Narrador Grave — PT-BR":       {"lang":"pt","tld":"com.br","pitch":0.70,"rate":0.91,"eq":"bass=g=7:f=90,treble=g=1:f=4000", "gender":"M"},
+    "🇧🇷 Locutor Rádio — PT-BR":        {"lang":"pt","tld":"com.br","pitch":0.80,"rate":0.97,"eq":"bass=g=5:f=110,treble=g=2:f=5500","gender":"M"},
+    # ── Português PT ──────────────────────────────────────────────────────────
+    "🇵🇹 Feminina — PT-PT":             {"lang":"pt","tld":"pt",    "pitch":1.08,"rate":1.00,"eq":"treble=g=2:f=6000",           "gender":"F"},
+    "🇵🇹 Masculina — PT-PT":            {"lang":"pt","tld":"pt",    "pitch":0.80,"rate":1.00,"eq":"bass=g=3:f=150",              "gender":"M"},
+    # ── Inglês US ─────────────────────────────────────────────────────────────
+    "🇺🇸 Female Natural — EN-US":       {"lang":"en","tld":"com",   "pitch":1.10,"rate":1.00,"eq":"treble=g=3:f=6000",           "gender":"F"},
+    "🇺🇸 Female Young — EN-US":         {"lang":"en","tld":"com",   "pitch":1.20,"rate":1.06,"eq":"treble=g=5:f=7000",           "gender":"F"},
+    "🇺🇸 Female Soft — EN-US":          {"lang":"en","tld":"com",   "pitch":1.06,"rate":0.93,"eq":"bass=g=2:f=150",              "gender":"F"},
+    "🇺🇸 Female Energetic — EN-US":     {"lang":"en","tld":"com",   "pitch":1.16,"rate":1.10,"eq":"treble=g=4:f=8000",           "gender":"F"},
+    "🇺🇸 Female News Anchor — EN-US":   {"lang":"en","tld":"com",   "pitch":1.04,"rate":0.96,"eq":"treble=g=2:f=5500,bass=g=1:f=180","gender":"F"},
+    "🇺🇸 Male Natural — EN-US":         {"lang":"en","tld":"com",   "pitch":0.82,"rate":1.00,"eq":"bass=g=4:f=150",              "gender":"M"},
+    "🇺🇸 Male Deep — EN-US":            {"lang":"en","tld":"com",   "pitch":0.72,"rate":0.95,"eq":"bass=g=7:f=90",               "gender":"M"},
+    "🇺🇸 Male Young — EN-US":           {"lang":"en","tld":"com",   "pitch":0.88,"rate":1.05,"eq":"bass=g=2:f=180",              "gender":"M"},
+    "🇺🇸 Male Narrator — EN-US":        {"lang":"en","tld":"com",   "pitch":0.76,"rate":0.92,"eq":"bass=g=4:f=120,treble=g=1:f=5000","gender":"M"},
+    "🇺🇸 Male Broadcast — EN-US":       {"lang":"en","tld":"com",   "pitch":0.80,"rate":0.97,"eq":"bass=g=5:f=100,treble=g=2:f=6000","gender":"M"},
+    "🇺🇸 Male Gravíssimo — EN-US":      {"lang":"en","tld":"com",   "pitch":0.65,"rate":0.90,"eq":"bass=g=9:f=75",               "gender":"M"},
+    # ── Inglês UK ─────────────────────────────────────────────────────────────
+    "🇬🇧 Female — EN-UK":               {"lang":"en","tld":"co.uk", "pitch":1.12,"rate":1.00,"eq":"treble=g=3:f=6500",           "gender":"F"},
+    "🇬🇧 Female Posh — EN-UK":          {"lang":"en","tld":"co.uk", "pitch":1.05,"rate":0.94,"eq":"treble=g=1:f=7000",           "gender":"F"},
+    "🇬🇧 Male — EN-UK":                 {"lang":"en","tld":"co.uk", "pitch":0.78,"rate":1.00,"eq":"bass=g=4:f=140",              "gender":"M"},
+    "🇬🇧 Male Deep — EN-UK":            {"lang":"en","tld":"co.uk", "pitch":0.70,"rate":0.94,"eq":"bass=g=6:f=100",              "gender":"M"},
+    # ── Inglês AUS / CA / IN / IE / ZA ───────────────────────────────────────
+    "🇦🇺 Female — EN-AU":               {"lang":"en","tld":"com.au","pitch":1.10,"rate":1.02,"eq":"treble=g=2:f=6000",           "gender":"F"},
+    "🇦🇺 Male — EN-AU":                 {"lang":"en","tld":"com.au","pitch":0.82,"rate":1.00,"eq":"bass=g=3:f=150",              "gender":"M"},
+    "🇨🇦 Female — EN-CA":               {"lang":"en","tld":"ca",    "pitch":1.09,"rate":1.00,"eq":"",                            "gender":"F"},
+    "🇨🇦 Male — EN-CA":                 {"lang":"en","tld":"ca",    "pitch":0.81,"rate":1.00,"eq":"bass=g=3:f=150",              "gender":"M"},
+    "🇮🇳 Female — EN-IN":               {"lang":"en","tld":"co.in", "pitch":1.11,"rate":1.00,"eq":"treble=g=2:f=5000",           "gender":"F"},
+    "🇮🇳 Male — EN-IN":                 {"lang":"en","tld":"co.in", "pitch":0.83,"rate":1.00,"eq":"bass=g=2:f=160",              "gender":"M"},
+    "🇮🇪 Male — EN-IE":                 {"lang":"en","tld":"ie",    "pitch":0.80,"rate":1.00,"eq":"",                            "gender":"M"},
+    "🇿🇦 Male — EN-ZA":                 {"lang":"en","tld":"co.za", "pitch":0.79,"rate":0.98,"eq":"bass=g=3:f=140",              "gender":"M"},
+    # ── Espanhol ──────────────────────────────────────────────────────────────
+    "🇪🇸 Feminina — ES":                {"lang":"es","tld":"com",   "pitch":1.10,"rate":1.00,"eq":"treble=g=2:f=6000",           "gender":"F"},
+    "🇪🇸 Masculina — ES":               {"lang":"es","tld":"com",   "pitch":0.82,"rate":1.00,"eq":"bass=g=3:f=150",              "gender":"M"},
+    # ── Francês / Italiano / Alemão ───────────────────────────────────────────
+    "🇫🇷 Féminine — FR":                {"lang":"fr","tld":"fr",    "pitch":1.10,"rate":1.00,"eq":"treble=g=2:f=6000",           "gender":"F"},
+    "🇫🇷 Masculin — FR":                {"lang":"fr","tld":"fr",    "pitch":0.80,"rate":1.00,"eq":"bass=g=3:f=150",              "gender":"M"},
+    "🇮🇹 Femminile — IT":               {"lang":"it","tld":"com",   "pitch":1.10,"rate":1.00,"eq":"",                            "gender":"F"},
+    "🇩🇪 Männlich — DE":                {"lang":"de","tld":"com",   "pitch":0.80,"rate":1.00,"eq":"bass=g=3:f=150",              "gender":"M"},
 }
 
-def _generate_tts_wav(text, voice_key="Feminina — Português BR", slow=False, volume_db=0.0):
-    from gtts import gTTS
-    cfg = TTS_VOICES.get(voice_key, TTS_VOICES["Feminina — Português BR"])
-    lang = cfg["lang"]; tld = cfg["tld"]; pitch = cfg["pitch"]
+# Agrupamento por bandeira/idioma para a combobox categorizada
+TTS_VOICE_GROUPS = {
+    "🇧🇷 Português BR":  [k for k,v in TTS_VOICES.items() if v["tld"]=="com.br"],
+    "🇵🇹 Português PT":  [k for k,v in TTS_VOICES.items() if v["tld"]=="pt"],
+    "🇺🇸 Inglês US":     [k for k,v in TTS_VOICES.items() if v["tld"]=="com" and v["lang"]=="en"],
+    "🇬🇧 Inglês UK":     [k for k,v in TTS_VOICES.items() if v["tld"]=="co.uk"],
+    "🇦🇺 Inglês AUS":    [k for k,v in TTS_VOICES.items() if v["tld"]=="com.au"],
+    "🇨🇦 Inglês CA":     [k for k,v in TTS_VOICES.items() if v["tld"]=="ca"],
+    "🇮🇳 Inglês IN":     [k for k,v in TTS_VOICES.items() if v["tld"]=="co.in"],
+    "🌍 Outros":          [k for k,v in TTS_VOICES.items() if v["lang"] not in ("pt","en")],
+}
 
-    tmp_dir = tempfile.mkdtemp(prefix="audiofix_tts_")
+# Velocidades de fala nomeadas (multiplicam o rate da voz)
+TTS_RATE_PRESETS = {
+    "Muito Lenta":  0.78,
+    "Lenta":        0.88,
+    "Normal":       1.00,
+    "Rápida":       1.12,
+    "Muito Rápida": 1.25,
+}
+
+# Templates de texto prontos para uso rápido
+TTS_TEXT_TEMPLATES = [
+    ("Vazio", ""),
+    ("Apresentação curta",
+     "Olá! Seja muito bem-vindo ao nosso canal. Não se esqueça de se inscrever e ativar o sininho!"),
+    ("Call to action",
+     "Aproveite essa oportunidade incrível! Clique no link da bio e garanta o seu agora, antes que acabe!"),
+    ("Narração de produto",
+     "Apresentamos o produto revolucionário que vai transformar a sua rotina. Tecnologia de ponta, resultado garantido."),
+    ("Intro podcast",
+     "Você está ouvindo o nosso podcast. Hoje vamos falar sobre um tema que vai mudar a sua perspectiva. Fique com a gente!"),
+    ("Encerramento vídeo",
+     "É isso por hoje! Se gostou do conteúdo, deixe seu like e compartilhe com os amigos. Até o próximo vídeo!"),
+    ("Short EN — Hook",
+     "Wait — before you scroll, you need to hear this. This one tip changed everything for me."),
+    ("Short EN — CTA",
+     "Drop a comment below and let me know what you think! And don't forget to follow for more content like this."),
+]
+
+
+def _generate_tts_wav(text, voice_key=None, rate_preset="Normal",
+                      volume_db=0.0, reverb=False, normalize=False):
+    """Gera um WAV a partir de texto usando gTTS + processamento ffmpeg.
+
+    Parâmetros
+    ----------
+    text        : texto a narrar
+    voice_key   : chave em TTS_VOICES (default: primeiro PT-BR feminino)
+    rate_preset : nome em TTS_RATE_PRESETS ou "Normal"
+    volume_db   : ganho em dB (-40 a +20)
+    reverb      : adiciona leve reverb de sala via ffmpeg (aecho)
+    normalize   : aplica loudnorm EBU R128 via ffmpeg
+    """
+    from gtts import gTTS
+
+    if voice_key is None:
+        voice_key = list(TTS_VOICES.keys())[0]
+    cfg = TTS_VOICES.get(voice_key, list(TTS_VOICES.values())[0])
+
+    lang   = cfg["lang"]
+    tld    = cfg["tld"]
+    pitch  = cfg["pitch"]
+    rate   = cfg.get("rate", 1.0) * TTS_RATE_PRESETS.get(rate_preset, 1.0)
+    eq     = cfg.get("eq", "")
+
+    tmp_dir  = tempfile.mkdtemp(prefix="audiofix_tts_")
     mp3_path = os.path.join(tmp_dir, "tts_raw.mp3")
     wav_path = os.path.join(tmp_dir, "tts_final.wav")
 
-    tts = gTTS(text=text, lang=lang, tld=tld, slow=slow)
+    # ── 1. Gerar MP3 via gTTS ──────────────────────────────────────────────
+    slow_mode = (rate < 0.90)           # gTTS "slow" para rates muito baixos
+    tts = gTTS(text=text, lang=lang, tld=tld, slow=slow_mode)
     tts.save(mp3_path)
 
-    semitones = 12 * math.log2(pitch)
-    rate_factor = 2 ** (semitones / 12)
+    # ── 2. Montar cadeia de filtros ffmpeg ────────────────────────────────
+    # Pitch: asetrate + aresample (método estável, sem artefatos de formante)
     original_sr = 44100
-    new_sr = int(original_sr * rate_factor)
+    semitones   = 12 * math.log2(pitch)
+    rate_factor = 2 ** (semitones / 12)          # pitch
+    new_sr      = int(original_sr * rate_factor)
 
-    vol_filter = f",volume={10**(volume_db/20):.4f}" if volume_db != 0.0 else ""
+    # Velocidade de fala (atempo) — encadeia múltiplos se fora do range [0.5, 2.0]
+    def _atempo_chain(r):
+        """Gera filtro atempo seguro para qualquer fator."""
+        filters = []
+        while r < 0.5:
+            filters.append("atempo=0.5"); r /= 0.5
+        while r > 2.0:
+            filters.append("atempo=2.0"); r /= 2.0
+        filters.append(f"atempo={r:.4f}")
+        return ",".join(filters)
+
+    af_parts = [f"asetrate={new_sr}", f"aresample={original_sr}"]
+
+    # Velocidade
+    if abs(rate - 1.0) > 0.01:
+        af_parts.append(_atempo_chain(rate))
+
+    # EQ da voz
+    if eq:
+        af_parts.append(eq)
+
+    # Volume
+    if abs(volume_db) > 0.01:
+        linear_gain = 10 ** (volume_db / 20.0)
+        af_parts.append(f"volume={linear_gain:.5f}")
+
+    # Reverb leve de sala
+    if reverb:
+        af_parts.append("aecho=0.8:0.88:60:0.4")
+
+    # Normalização EBU R128
+    if normalize:
+        af_parts.append("loudnorm=I=-16:TP=-1.5:LRA=11")
+
+    af_string = ",".join(af_parts)
 
     flags = subprocess.CREATE_NO_WINDOW if platform.system() == "Windows" else 0
     cmd = [
         "ffmpeg", "-y", "-i", mp3_path,
-        "-af", f"asetrate={new_sr},aresample={original_sr}{vol_filter}",
+        "-af", af_string,
         "-ar", "44100", "-ac", "2",
         wav_path
     ]
     r = subprocess.run(cmd, capture_output=True, creationflags=flags)
     if r.returncode != 0:
-        cmd2 = ["ffmpeg", "-y", "-i", mp3_path,
-                "-ar", "44100", "-ac", "2", wav_path]
+        # Fallback sem filtros complexos
+        cmd2 = ["ffmpeg", "-y", "-i", mp3_path, "-ar", "44100", "-ac", "2", wav_path]
         subprocess.run(cmd2, capture_output=True, creationflags=flags)
 
     os.unlink(mp3_path)
@@ -534,9 +680,9 @@ class CollapsibleSection(tk.Frame):
         self._arrow = tk.Label(
             self._hdr,
             text="▼" if self._open else "▶",
-            font=("Segoe UI", 8, "bold"),   # compactado de 9 → 8
+            font=("Segoe UI", 8, "bold"),
             bg=self._HDR_BG, fg=self._color,
-            padx=8, pady=6,                  # compactado pady 8 → 6
+            padx=8, pady=6,
         )
         self._arrow.pack(side="left")
 
@@ -546,7 +692,7 @@ class CollapsibleSection(tk.Frame):
             text=full_title,
             font=FONT_BOLD,
             bg=self._HDR_BG, fg=TEXT,
-            pady=6,                          # compactado de 8 → 6
+            pady=6,
         )
         self._title_lbl.pack(side="left", fill="x", expand=True)
 
@@ -574,7 +720,7 @@ class CollapsibleSection(tk.Frame):
 
         self._content = tk.Frame(self, bg=DARK)
         if self._open:
-            self._content.pack(fill="x", pady=(1, 3))  # compactado (2,4) → (1,3)
+            self._content.pack(fill="x", pady=(1, 3))
 
     def _on_enter(self, e=None):
         for w in (self._hdr, self._arrow, self._title_lbl, self._hint):
@@ -611,7 +757,7 @@ class CollapsibleSection(tk.Frame):
 # ─── NoiseControl ─────────────────────────────────────────────────────────────
 class NoiseControl(tk.Frame):
     def __init__(self, parent, name, color, default_amp=0.0, **kwargs):
-        super().__init__(parent, bg=CARD, padx=8, pady=6, **kwargs)  # compactado padx/pady
+        super().__init__(parent, bg=CARD, padx=8, pady=6, **kwargs)
         self.name = name; self.color = color
         self._enabled = tk.BooleanVar(value=default_amp > 0)
         self._amp = tk.DoubleVar(value=default_amp if default_amp > 0 else 0.003)
@@ -625,7 +771,7 @@ class NoiseControl(tk.Frame):
         self._amp_lbl = tk.Label(top, text=f"{self._amp.get():.4f}", font=FONT_BOLD, bg=CARD, fg=color, width=7)
         self._amp_lbl.pack(side="right")
         self._slider = ttk.Scale(self, from_=0.0001, to=0.02, variable=self._amp, orient="horizontal", command=self._on_slide)
-        self._slider.pack(fill="x", pady=(3,0))  # compactado pady (4,0) → (3,0)
+        self._slider.pack(fill="x", pady=(3,0))
         self._toggle()
 
     def _toggle(self):
@@ -646,7 +792,7 @@ class VariationLevelSelector(tk.Frame):
         self._level = tk.StringVar(value="Normal"); self._btns = {}; self._build()
 
     def _build(self):
-        hdr = tk.Frame(self, bg=CARD); hdr.pack(fill="x", pady=(0,6))  # compactado (0,8) → (0,6)
+        hdr = tk.Frame(self, bg=CARD); hdr.pack(fill="x", pady=(0,6))
         tk.Label(hdr, text="📊  Nível de variação dos metadados:", font=FONT_BOLD, bg=CARD, fg=MUTED).pack(side="left")
         self._desc_lbl = tk.Label(hdr, text="", font=FONT_SMALL, bg=CARD, fg=MUTED); self._desc_lbl.pack(side="right")
         btn_row = tk.Frame(self, bg=CARD); btn_row.pack(fill="x")
@@ -655,17 +801,17 @@ class VariationLevelSelector(tk.Frame):
             cfg = VARIATION_LEVELS[level_name]; col = cfg["color"]
             btn_outer = tk.Frame(btn_row, bg=MUTED, padx=1, pady=1)
             btn_outer.grid(row=0, column=idx, sticky="ew", padx=(0,3) if idx < 3 else 0)
-            btn_inner = tk.Frame(btn_outer, bg=CARD, padx=6, pady=6, cursor="hand2")  # compactado padx/pady 8 → 6
+            btn_inner = tk.Frame(btn_outer, bg=CARD, padx=6, pady=6, cursor="hand2")
             btn_inner.pack(fill="both", expand=True)
             name_lbl = tk.Label(btn_inner, text=cfg["label"], font=FONT_BOLD, bg=CARD, fg=TEXT); name_lbl.pack(anchor="center")
-            line = tk.Frame(btn_inner, bg=col, height=2); line.pack(fill="x", pady=(3,0))  # height 3→2, pady (4,0)→(3,0)
+            line = tk.Frame(btn_inner, bg=col, height=2); line.pack(fill="x", pady=(3,0))
             rb = tk.Radiobutton(btn_inner, variable=self._level, value=level_name, bg=CARD,
                                 activebackground=CARD, selectcolor="#111116", relief="flat", bd=0,
                                 cursor="hand2", command=self._refresh)
             rb.pack(anchor="e")
             for w in [btn_outer, btn_inner, name_lbl, line]: w.bind("<Button-1>", lambda e, lv=level_name: self._select(lv))
             self._btns[level_name] = (btn_outer, btn_inner, name_lbl, line, rb)
-        ex_card = tk.Frame(self, bg="#111116", padx=8, pady=6); ex_card.pack(fill="x", pady=(6,0))  # compactado
+        ex_card = tk.Frame(self, bg="#111116", padx=8, pady=6); ex_card.pack(fill="x", pady=(6,0))
         self._ex_title = tk.Label(ex_card, text="", font=FONT_MONO, bg="#111116", fg=ACC2); self._ex_title.pack(anchor="w")
         self._ex_date  = tk.Label(ex_card, text="", font=FONT_MONO, bg="#111116", fg=MUTED); self._ex_date.pack(anchor="w")
         self._refresh()
@@ -708,7 +854,7 @@ class BatchQueueItem(tk.Frame):
                      STATUS_DONE: "✅", STATUS_ERROR: "❌", STATUS_CANCELLED: "⚠️"}
 
     def __init__(self, parent, video_path, on_remove=None, **kwargs):
-        super().__init__(parent, bg=CARD, padx=8, pady=6, **kwargs)  # compactado padx/pady
+        super().__init__(parent, bg=CARD, padx=8, pady=6, **kwargs)
         self.video_path = video_path
         self.on_remove  = on_remove
         self._status    = self.STATUS_PENDING
@@ -719,7 +865,7 @@ class BatchQueueItem(tk.Frame):
     def _build(self):
         self.config(relief="flat", bd=0)
         top = tk.Frame(self, bg=CARD); top.pack(fill="x")
-        self._icon_lbl = tk.Label(top, text="⏳", font=("Segoe UI Emoji", 10), bg=CARD, fg=MUTED, width=3)  # font 12→10
+        self._icon_lbl = tk.Label(top, text="⏳", font=("Segoe UI Emoji", 10), bg=CARD, fg=MUTED, width=3)
         self._icon_lbl.pack(side="left")
         name_frame = tk.Frame(top, bg=CARD); name_frame.pack(side="left", fill="x", expand=True, padx=(4,0))
         self._name_lbl = tk.Label(name_frame, text=os.path.basename(self.video_path), font=FONT_BOLD, bg=CARD, fg=TEXT, anchor="w")
@@ -728,13 +874,13 @@ class BatchQueueItem(tk.Frame):
         if len(dir_text) > 60: dir_text = "…" + dir_text[-57:]
         tk.Label(name_frame, text=dir_text, font=FONT_SMALL, bg=CARD, fg=MUTED, anchor="w").pack(anchor="w")
         self._remove_btn = tk.Button(top, text="✕", font=FONT_SMALL, bg="#2a1a1a", fg=RED,
-                                     relief="flat", padx=6, pady=1, cursor="hand2", command=self._do_remove)  # compactado padx/pady
+                                     relief="flat", padx=6, pady=1, cursor="hand2", command=self._do_remove)
         self._remove_btn.pack(side="right")
         self._prog = ttk.Progressbar(self, mode="determinate", maximum=100, length=200)
-        self._prog.pack(fill="x", pady=(4,0))  # compactado (6,0) → (4,0)
+        self._prog.pack(fill="x", pady=(4,0))
         self._status_lbl = tk.Label(self, text="Na fila…", font=FONT_STATUS, bg=CARD, fg=MUTED, anchor="w")
-        self._status_lbl.pack(anchor="w", pady=(1,0))  # compactado (2,0) → (1,0)
-        tk.Frame(self, bg="#2a2a35", height=1).pack(fill="x", pady=(6,0))  # compactado (8,0) → (6,0)
+        self._status_lbl.pack(anchor="w", pady=(1,0))
+        tk.Frame(self, bg="#2a2a35", height=1).pack(fill="x", pady=(6,0))
 
     def _do_remove(self):
         if self._status == self.STATUS_RUNNING: return
@@ -774,29 +920,29 @@ class BatchQueuePanel(tk.Frame):
         self._build()
 
     def _build(self):
-        hdr = tk.Frame(self, bg=DARK); hdr.pack(fill="x", pady=(0,6))  # compactado (0,8) → (0,6)
+        hdr = tk.Frame(self, bg=DARK); hdr.pack(fill="x", pady=(0,6))
         tk.Label(hdr, text="📂  Fila de Vídeos", font=FONT_BOLD, bg=DARK, fg=MUTED).pack(side="left")
         self._count_lbl = tk.Label(hdr, text="0 vídeos", font=FONT_SMALL, bg=DARK, fg=MUTED)
         self._count_lbl.pack(side="left", padx=(8,0))
         btn_row = tk.Frame(hdr, bg=DARK); btn_row.pack(side="right")
         tk.Button(btn_row, text="➕  Adicionar vídeos", font=FONT_LABEL, bg=ACCENT, fg="white",
-                  activebackground=ACC2, relief="flat", padx=10, pady=3, cursor="hand2",  # compactado padx 12→10, pady 4→3
+                  activebackground=ACC2, relief="flat", padx=10, pady=3, cursor="hand2",
                   command=self._browse_add).pack(side="left", padx=(0,4))
         tk.Button(btn_row, text="📁  Adicionar pasta", font=FONT_LABEL, bg="#2a2a35", fg=ACC2,
-                  relief="flat", padx=10, pady=3, cursor="hand2",  # compactado
+                  relief="flat", padx=10, pady=3, cursor="hand2",
                   command=self._browse_folder).pack(side="left", padx=(0,4))
         tk.Button(btn_row, text="🗑  Limpar fila", font=FONT_LABEL, bg="#2a1a1a", fg=RED,
-                  relief="flat", padx=10, pady=3, cursor="hand2",  # compactado
+                  relief="flat", padx=10, pady=3, cursor="hand2",
                   command=self._clear_queue).pack(side="left")
         self._drop_zone = tk.Frame(self, bg="#1a1a22", relief="flat", bd=0)
-        self._drop_zone.pack(fill="x", pady=(0,6))  # compactado (0,8) → (0,6)
+        self._drop_zone.pack(fill="x", pady=(0,6))
         self._drop_lbl = tk.Label(self._drop_zone,
             text="🎬  Arraste vídeos aqui  ou  clique em 'Adicionar vídeos'",
-            font=("Segoe UI", 9), bg="#1a1a22", fg=MUTED, pady=14)  # font 10→9, pady 20→14
+            font=("Segoe UI", 9), bg="#1a1a22", fg=MUTED, pady=14)
         self._drop_lbl.pack()
         self._setup_dnd()
         outer = tk.Frame(self, bg=DARK); outer.pack(fill="both", expand=True)
-        self._canvas = tk.Canvas(outer, bg=DARK, highlightthickness=0, height=240)  # height 280→240
+        self._canvas = tk.Canvas(outer, bg=DARK, highlightthickness=0, height=240)
         sb = ttk.Scrollbar(outer, orient="vertical", command=self._canvas.yview)
         self._canvas.configure(yscrollcommand=sb.set)
         sb.pack(side="right", fill="y"); self._canvas.pack(side="left", fill="both", expand=True)
@@ -805,7 +951,7 @@ class BatchQueuePanel(tk.Frame):
         self._list_frame.bind("<Configure>", lambda e: self._canvas.configure(scrollregion=self._canvas.bbox("all")))
         self._canvas.bind("<Configure>", lambda e: self._canvas.itemconfig(self._win_id, width=e.width))
         self._canvas.bind_all("<MouseWheel>", lambda e: self._canvas.yview_scroll(int(-1*(e.delta/120)), "units"))
-        stats = tk.Frame(self, bg=CARD, padx=10, pady=6); stats.pack(fill="x", pady=(6,0))  # compactado padx 12→10, pady 8→6
+        stats = tk.Frame(self, bg=CARD, padx=10, pady=6); stats.pack(fill="x", pady=(6,0))
         stats.columnconfigure((0,1,2,3), weight=1)
         self._stat_total   = self._stat_cell(stats, 0, "Total",      "0", TEXT)
         self._stat_pending = self._stat_cell(stats, 1, "Na fila",    "0", MUTED)
@@ -814,7 +960,7 @@ class BatchQueuePanel(tk.Frame):
 
     def _stat_cell(self, parent, col, label, value, color):
         frame = tk.Frame(parent, bg=CARD); frame.grid(row=0, column=col, sticky="ew", padx=4)
-        val_lbl = tk.Label(frame, text=value, font=("Segoe UI",13,"bold"), bg=CARD, fg=color)  # font 16→13
+        val_lbl = tk.Label(frame, text=value, font=("Segoe UI",13,"bold"), bg=CARD, fg=color)
         val_lbl.pack(); tk.Label(frame, text=label, font=FONT_SMALL, bg=CARD, fg=MUTED).pack()
         return val_lbl
 
@@ -858,7 +1004,7 @@ class BatchQueuePanel(tk.Frame):
     def add_video(self, path):
         if path in [i.video_path for i in self._items]: return
         item = BatchQueueItem(self._list_frame, video_path=path, on_remove=self._remove_item)
-        item.pack(fill="x", padx=4, pady=(0,3))  # compactado pady (0,4) → (0,3)
+        item.pack(fill="x", padx=4, pady=(0,3))
         self._items.append(item); self._update_stats()
         self._drop_zone.pack_forget()
 
@@ -885,24 +1031,36 @@ class BatchQueuePanel(tk.Frame):
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-#   PAINEL TTS
+#   PAINEL TTS — versão expandida v5.2
 # ═══════════════════════════════════════════════════════════════════════════════
 
 class TTSPanel(tk.Frame):
+    """Painel TTS com 45+ vozes, volume ±40 dB, reverb, normalização e templates."""
+
+    # Cores internas
+    _BG      = "#0f0a1a"
+    _BG_HDR  = "#1a1025"
+    _BG_HOV  = "#201030"
+
     def __init__(self, parent, on_wav_ready=None, bg=CARD, **kwargs):
         super().__init__(parent, bg=bg, **kwargs)
-        self.on_wav_ready = on_wav_ready
-        self._bg = bg
+        self.on_wav_ready  = on_wav_ready
+        self._bg           = bg
+        self._last_wav     = None          # último WAV gerado (para preview)
+        self._preview_proc = None          # processo ffplay em andamento
         self._build()
+
+    # ─── UI ───────────────────────────────────────────────────────────────────
 
     def _build(self):
         bg = self._bg
 
+        # ── Header colapsável ─────────────────────────────────────────────
         hdr = tk.Frame(self, bg=bg); hdr.pack(fill="x")
         self._toggle_btn = tk.Button(
             hdr, text="🎙  ▶  Gerar voz (TTS) para Copy White",
-            font=FONT_BOLD, bg="#1a1025", fg=PURPLE, relief="flat",
-            padx=10, pady=5, cursor="hand2", anchor="w",  # compactado padx 12→10, pady 6→5
+            font=FONT_BOLD, bg=self._BG_HDR, fg=PURPLE, relief="flat",
+            padx=10, pady=5, cursor="hand2", anchor="w",
             command=self._toggle
         )
         self._toggle_btn.pack(side="left", fill="x", expand=True)
@@ -913,69 +1071,333 @@ class TTSPanel(tk.Frame):
         )
         self._gtts_lbl.pack(side="right", padx=6)
 
-        self._body = tk.Frame(self, bg="#0f0a1a", padx=12, pady=10)  # compactado padx 14→12, pady 12→10
+        # ── Corpo expansível ──────────────────────────────────────────────
+        self._body = tk.Frame(self, bg=self._BG, padx=12, pady=10)
 
-        txt_lbl = tk.Label(self._body, text="Texto para narrar:", font=FONT_BOLD, bg="#0f0a1a", fg=MUTED)
-        txt_lbl.pack(anchor="w", pady=(0,3))  # compactado (0,4) → (0,3)
-        self._txt = tk.Text(self._body, height=4, font=("Consolas", 9),  # height 5→4, font 10→9
+        # ── Linha 1: Templates ────────────────────────────────────────────
+        tmpl_row = tk.Frame(self._body, bg=self._BG); tmpl_row.pack(fill="x", pady=(0,6))
+        tk.Label(tmpl_row, text="📋  Template:", font=FONT_BOLD,
+                 bg=self._BG, fg=MUTED).pack(side="left")
+        self._tmpl_var = tk.StringVar(value=TTS_TEXT_TEMPLATES[0][0])
+        tmpl_names = [t[0] for t in TTS_TEXT_TEMPLATES]
+        tmpl_cb = ttk.Combobox(tmpl_row, textvariable=self._tmpl_var,
+                               values=tmpl_names, state="readonly",
+                               width=20, font=FONT_LABEL)
+        tmpl_cb.pack(side="left", padx=(6,0))
+        tmpl_cb.bind("<<ComboboxSelected>>", self._apply_template)
+        tk.Button(tmpl_row, text="Aplicar", font=FONT_LABEL,
+                  bg=CARD2, fg=PURPLE, relief="flat",
+                  padx=6, pady=1, cursor="hand2",
+                  command=self._apply_template).pack(side="left", padx=(4,0))
+        tk.Button(tmpl_row, text="🗑 Limpar", font=FONT_LABEL,
+                  bg="#2a1a1a", fg=RED, relief="flat",
+                  padx=6, pady=1, cursor="hand2",
+                  command=lambda: self._txt.delete("1.0","end")).pack(side="left", padx=(4,0))
+        self._char_lbl = tk.Label(tmpl_row, text="0 chars", font=FONT_SMALL,
+                                  bg=self._BG, fg=MUTED)
+        self._char_lbl.pack(side="right")
+
+        # ── Linha 2: Texto ────────────────────────────────────────────────
+        tk.Label(self._body, text="Texto para narrar:",
+                 font=FONT_BOLD, bg=self._BG, fg=MUTED).pack(anchor="w", pady=(0,3))
+        self._txt = tk.Text(self._body, height=4, font=("Consolas", 9),
                             bg="#1a0f2e", fg=TEXT, insertbackground=PURPLE,
                             relief="flat", bd=1, wrap="word",
                             selectbackground=ACCENT, selectforeground="white")
-        self._txt.pack(fill="x", pady=(0,8))  # compactado (0,10) → (0,8)
+        self._txt.pack(fill="x", pady=(0,8))
+        self._txt.bind("<KeyRelease>", self._update_char_count)
 
-        opts = tk.Frame(self._body, bg="#0f0a1a"); opts.pack(fill="x", pady=(0,6))  # compactado (0,8) → (0,6)
-        opts.columnconfigure(0, weight=2); opts.columnconfigure(1, weight=1)
-        opts.columnconfigure(2, weight=1); opts.columnconfigure(3, weight=1)
+        # ── Linha 3: Seletor de voz com filtro M/F/país ───────────────────
+        voice_frame = tk.Frame(self._body, bg=self._BG); voice_frame.pack(fill="x", pady=(0,6))
+        voice_frame.columnconfigure(0, weight=3)
+        voice_frame.columnconfigure(1, weight=1)
+        voice_frame.columnconfigure(2, weight=1)
 
-        tk.Label(opts, text="🎤  Voz:", font=FONT_BOLD, bg="#0f0a1a", fg=MUTED).grid(row=0, column=0, sticky="w")
+        # Combobox principal de voz
+        vl_col = tk.Frame(voice_frame, bg=self._BG)
+        vl_col.grid(row=0, column=0, sticky="ew", padx=(0,8))
+        tk.Label(vl_col, text="🎤  Voz:", font=FONT_BOLD,
+                 bg=self._BG, fg=MUTED).pack(anchor="w")
         self._voice_var = tk.StringVar(value=list(TTS_VOICES.keys())[0])
-        voice_cb = ttk.Combobox(opts, textvariable=self._voice_var,
-                                values=list(TTS_VOICES.keys()),
-                                state="readonly", width=26, font=FONT_LABEL)  # width 28→26
-        voice_cb.grid(row=1, column=0, sticky="ew", padx=(0,8), pady=(2,0))
+        self._voice_cb = ttk.Combobox(vl_col, textvariable=self._voice_var,
+                                      values=list(TTS_VOICES.keys()),
+                                      state="readonly", width=34, font=FONT_LABEL)
+        self._voice_cb.pack(fill="x", pady=(2,0))
+        self._voice_cb.bind("<<ComboboxSelected>>", self._on_voice_change)
 
-        tk.Label(opts, text="⏱  Velocidade:", font=FONT_BOLD, bg="#0f0a1a", fg=MUTED).grid(row=0, column=1, sticky="w")
-        self._slow_var = tk.BooleanVar(value=False)
-        spd_frame = tk.Frame(opts, bg="#0f0a1a"); spd_frame.grid(row=1, column=1, sticky="ew", padx=(0,8), pady=(2,0))
-        tk.Radiobutton(spd_frame, text="Normal", variable=self._slow_var, value=False,
-                       bg="#0f0a1a", fg=TEXT, selectcolor="#0d0d0d", activebackground="#0f0a1a",
-                       relief="flat", font=FONT_LABEL).pack(side="left")
-        tk.Radiobutton(spd_frame, text="Lenta", variable=self._slow_var, value=True,
-                       bg="#0f0a1a", fg=TEXT, selectcolor="#0d0d0d", activebackground="#0f0a1a",
-                       relief="flat", font=FONT_LABEL).pack(side="left", padx=(8,0))
+        # Filtro por gênero
+        gf_col = tk.Frame(voice_frame, bg=self._BG)
+        gf_col.grid(row=0, column=1, sticky="ew", padx=(0,8))
+        tk.Label(gf_col, text="⚡  Gênero:", font=FONT_BOLD,
+                 bg=self._BG, fg=MUTED).pack(anchor="w")
+        self._gender_filter = tk.StringVar(value="Todos")
+        gf_cb = ttk.Combobox(gf_col, textvariable=self._gender_filter,
+                              values=["Todos", "♀ Femininas", "♂ Masculinas"],
+                              state="readonly", width=14, font=FONT_LABEL)
+        gf_cb.pack(fill="x", pady=(2,0))
+        gf_cb.bind("<<ComboboxSelected>>", self._filter_voices)
 
-        tk.Label(opts, text="🔊  Volume:", font=FONT_BOLD, bg="#0f0a1a", fg=MUTED).grid(row=0, column=2, sticky="w")
+        # Filtro por idioma
+        lang_col = tk.Frame(voice_frame, bg=self._BG)
+        lang_col.grid(row=0, column=2, sticky="ew")
+        tk.Label(lang_col, text="🌐  Idioma:", font=FONT_BOLD,
+                 bg=self._BG, fg=MUTED).pack(anchor="w")
+        self._lang_filter = tk.StringVar(value="Todos")
+        lang_opts = ["Todos"] + list(TTS_VOICE_GROUPS.keys())
+        lf_cb = ttk.Combobox(lang_col, textvariable=self._lang_filter,
+                              values=lang_opts, state="readonly",
+                              width=16, font=FONT_LABEL)
+        lf_cb.pack(fill="x", pady=(2,0))
+        lf_cb.bind("<<ComboboxSelected>>", self._filter_voices)
+
+        # Badge de info da voz selecionada
+        self._voice_badge = tk.Label(self._body, text="", font=FONT_SMALL,
+                                     bg=self._BG, fg=ACC2, anchor="w")
+        self._voice_badge.pack(anchor="w", pady=(2,6))
+        self._on_voice_change()
+
+        # ── Linha 4: Velocidade e opções ──────────────────────────────────
+        opts2 = tk.Frame(self._body, bg=self._BG); opts2.pack(fill="x", pady=(0,8))
+        opts2.columnconfigure(0, weight=1)
+        opts2.columnconfigure(1, weight=1)
+        opts2.columnconfigure(2, weight=1)
+
+        # Velocidade
+        spd_col = tk.Frame(opts2, bg=self._BG)
+        spd_col.grid(row=0, column=0, sticky="ew", padx=(0,8))
+        tk.Label(spd_col, text="⏱  Velocidade:", font=FONT_BOLD,
+                 bg=self._BG, fg=MUTED).pack(anchor="w")
+        self._rate_var = tk.StringVar(value="Normal")
+        rate_cb = ttk.Combobox(spd_col, textvariable=self._rate_var,
+                               values=list(TTS_RATE_PRESETS.keys()),
+                               state="readonly", width=14, font=FONT_LABEL)
+        rate_cb.pack(fill="x", pady=(2,0))
+
+        # Reverb
+        rev_col = tk.Frame(opts2, bg=self._BG)
+        rev_col.grid(row=0, column=1, sticky="ew", padx=(0,8))
+        tk.Label(rev_col, text="🏠  Efeitos:", font=FONT_BOLD,
+                 bg=self._BG, fg=MUTED).pack(anchor="w")
+        self._reverb_var = tk.BooleanVar(value=False)
+        tk.Checkbutton(rev_col, text="Reverb de sala",
+                       variable=self._reverb_var,
+                       bg=self._BG, fg=TEXT, selectcolor="#111116",
+                       activebackground=self._BG, relief="flat",
+                       font=FONT_LABEL).pack(anchor="w", pady=(4,0))
+
+        # Normalizar
+        norm_col = tk.Frame(opts2, bg=self._BG)
+        norm_col.grid(row=0, column=2, sticky="ew")
+        tk.Label(norm_col, text="📊  Pós-proc.:", font=FONT_BOLD,
+                 bg=self._BG, fg=MUTED).pack(anchor="w")
+        self._norm_var = tk.BooleanVar(value=False)
+        tk.Checkbutton(norm_col, text="Normalizar (EBU R128)",
+                       variable=self._norm_var,
+                       bg=self._BG, fg=TEXT, selectcolor="#111116",
+                       activebackground=self._BG, relief="flat",
+                       font=FONT_LABEL).pack(anchor="w", pady=(4,0))
+
+        # ── Linha 5: Volume estendido (-40 a +20 dB) ─────────────────────
+        vol_frame = tk.Frame(self._body, bg=self._BG); vol_frame.pack(fill="x", pady=(0,8))
+
+        vol_hdr = tk.Frame(vol_frame, bg=self._BG); vol_hdr.pack(fill="x")
+        tk.Label(vol_hdr, text="🔊  Volume:", font=FONT_BOLD,
+                 bg=self._BG, fg=MUTED).pack(side="left")
+        self._vol_lbl = tk.Label(vol_hdr, text="  0.0 dB",
+                                 font=("Segoe UI", 9, "bold"),
+                                 bg=self._BG, fg=PURPLE, width=10)
+        self._vol_lbl.pack(side="left")
+
+        # Botões de preset de volume rápido
+        for label, val in [("-40", -40), ("-20", -20), ("-10", -10),
+                           ("  0", 0), ("+6", 6), ("+12", 12), ("+20", 20)]:
+            tk.Button(vol_hdr, text=label, font=FONT_SMALL,
+                      bg=CARD2, fg=MUTED, relief="flat",
+                      padx=4, pady=1, cursor="hand2",
+                      command=lambda v=val: self._set_volume(v)).pack(side="left", padx=(2,0))
+
         self._vol_var = tk.DoubleVar(value=0.0)
-        self._vol_lbl = tk.Label(opts, text="0 dB", font=FONT_BOLD, bg="#0f0a1a", fg=PURPLE, width=6)
-        self._vol_lbl.grid(row=0, column=3, sticky="e")
-        vol_slider = ttk.Scale(opts, from_=-12.0, to=12.0, variable=self._vol_var, orient="horizontal",
-                               command=lambda v: self._vol_lbl.config(text=f"{float(v):+.1f} dB"))
-        vol_slider.grid(row=1, column=2, columnspan=2, sticky="ew", pady=(2,0))
+        vol_slider = ttk.Scale(vol_frame, from_=-40.0, to=20.0,
+                               variable=self._vol_var, orient="horizontal",
+                               command=self._on_vol_slide)
+        vol_slider.pack(fill="x", pady=(4,0))
 
-        bot = tk.Frame(self._body, bg="#0f0a1a"); bot.pack(fill="x", pady=(4,0))  # compactado (6,0) → (4,0)
+        # Marcadores visuais do slider
+        marks_row = tk.Frame(vol_frame, bg=self._BG); marks_row.pack(fill="x")
+        for mark_txt, mark_anchor in [("-40 dB","w"),("-20 dB",None),("0 dB",None),("+10 dB",None),("+20 dB","e")]:
+            lbl = tk.Label(marks_row, text=mark_txt, font=FONT_SMALL, bg=self._BG, fg=MUTED)
+            if mark_anchor == "w":   lbl.pack(side="left")
+            elif mark_anchor == "e": lbl.pack(side="right")
+            else:                    lbl.pack(side="left", expand=True)
+
+        # ── Linha 6: Botões de ação ───────────────────────────────────────
+        bot = tk.Frame(self._body, bg=self._BG); bot.pack(fill="x", pady=(4,0))
+
         self._gen_btn = tk.Button(
-            bot, text="✨  Gerar WAV e usar no Copy White",
-            font=("Segoe UI", 9, "bold"), bg=PURPLE, fg="white",  # font 10→9
-            activebackground=ACC2, relief="flat", padx=14, pady=6,  # compactado padx 16→14, pady 7→6
+            bot, text="✨  Gerar WAV",
+            font=("Segoe UI", 9, "bold"), bg=PURPLE, fg="white",
+            activebackground=ACC2, relief="flat", padx=14, pady=6,
             cursor="hand2", command=self._run_tts
         )
         self._gen_btn.pack(side="left")
-        self._status_lbl = tk.Label(bot, text="", font=FONT_STATUS, bg="#0f0a1a", fg=MUTED)
-        self._status_lbl.pack(side="left", padx=(10,0))  # compactado (12,0) → (10,0)
 
-        self._wav_info = tk.Label(self._body, text="", font=FONT_MONO, bg="#0f0a1a", fg=TEAL, anchor="w")
-        self._wav_info.pack(anchor="w", pady=(4,0))  # compactado (6,0) → (4,0)
+        self._preview_btn = tk.Button(
+            bot, text="▶  Preview",
+            font=FONT_LABEL, bg=TEAL, fg=DARK,
+            relief="flat", padx=10, pady=6,
+            cursor="hand2", command=self._preview_wav,
+            state="disabled"
+        )
+        self._preview_btn.pack(side="left", padx=(6,0))
+
+        self._stop_btn = tk.Button(
+            bot, text="⏹",
+            font=FONT_LABEL, bg="#2a1a1a", fg=RED,
+            relief="flat", padx=8, pady=6,
+            cursor="hand2", command=self._stop_preview,
+            state="disabled"
+        )
+        self._stop_btn.pack(side="left", padx=(4,0))
+
+        self._copy_btn = tk.Button(
+            bot, text="📋  Copiar path",
+            font=FONT_LABEL, bg=CARD2, fg=MUTED,
+            relief="flat", padx=8, pady=6,
+            cursor="hand2", command=self._copy_path,
+            state="disabled"
+        )
+        self._copy_btn.pack(side="left", padx=(4,0))
+
+        self._status_lbl = tk.Label(bot, text="", font=FONT_STATUS,
+                                    bg=self._BG, fg=MUTED)
+        self._status_lbl.pack(side="left", padx=(10,0))
+
+        # ── Linha 7: Info do WAV gerado ───────────────────────────────────
+        self._wav_info = tk.Label(self._body, text="", font=FONT_MONO,
+                                  bg=self._BG, fg=TEAL, anchor="w",
+                                  wraplength=700, justify="left")
+        self._wav_info.pack(anchor="w", pady=(4,0))
 
         self._expanded = False
+
+    # ─── Callbacks internos ───────────────────────────────────────────────────
 
     def _toggle(self):
         self._expanded = not self._expanded
         if self._expanded:
-            self._body.pack(fill="x", pady=(3,0))  # compactado (4,0) → (3,0)
-            self._toggle_btn.config(text="🎙  ▼  Gerar voz (TTS) para Copy White", bg="#201030")
+            self._body.pack(fill="x", pady=(3,0))
+            self._toggle_btn.config(
+                text="🎙  ▼  Gerar voz (TTS) para Copy White",
+                bg=self._BG_HOV)
         else:
             self._body.pack_forget()
-            self._toggle_btn.config(text="🎙  ▶  Gerar voz (TTS) para Copy White", bg="#1a1025")
+            self._toggle_btn.config(
+                text="🎙  ▶  Gerar voz (TTS) para Copy White",
+                bg=self._BG_HDR)
+
+    def _apply_template(self, event=None):
+        name = self._tmpl_var.get()
+        for tname, ttext in TTS_TEXT_TEMPLATES:
+            if tname == name:
+                self._txt.delete("1.0", "end")
+                self._txt.insert("1.0", ttext)
+                self._update_char_count()
+                break
+
+    def _update_char_count(self, event=None):
+        n = len(self._txt.get("1.0","end").strip())
+        color = GREEN if n > 0 else MUTED
+        self._char_lbl.config(text=f"{n} chars", fg=color)
+
+    def _filter_voices(self, event=None):
+        gf   = self._gender_filter.get()
+        lf   = self._lang_filter.get()
+        gender_map = {"Todos": None, "♀ Femininas": "F", "♂ Masculinas": "M"}
+        target_gender = gender_map.get(gf)
+
+        # Construir lista filtrada
+        if lf == "Todos":
+            candidates = list(TTS_VOICES.keys())
+        else:
+            candidates = TTS_VOICE_GROUPS.get(lf, list(TTS_VOICES.keys()))
+
+        if target_gender:
+            candidates = [k for k in candidates
+                          if TTS_VOICES[k].get("gender") == target_gender]
+
+        if not candidates:
+            candidates = list(TTS_VOICES.keys())  # fallback
+
+        self._voice_cb.config(values=candidates)
+        if self._voice_var.get() not in candidates:
+            self._voice_var.set(candidates[0])
+        self._on_voice_change()
+
+    def _on_voice_change(self, event=None):
+        key = self._voice_var.get()
+        cfg = TTS_VOICES.get(key, {})
+        gender_icon = "♀" if cfg.get("gender") == "F" else "♂"
+        pitch  = cfg.get("pitch", 1.0)
+        rate   = cfg.get("rate",  1.0)
+        eq     = cfg.get("eq",    "")
+        lang   = cfg.get("lang",  "?")
+        tld    = cfg.get("tld",   "?")
+        pitch_desc = f"pitch×{pitch:.2f}"
+        rate_desc  = f"rate×{rate:.2f}"
+        eq_desc    = f"eq: {eq[:30]}" if eq else "sem EQ"
+        self._voice_badge.config(
+            text=f"  {gender_icon}  {lang}-{tld}  ·  {pitch_desc}  ·  {rate_desc}  ·  {eq_desc}"
+        )
+
+    def _set_volume(self, val):
+        self._vol_var.set(float(val))
+        self._on_vol_slide(val)
+
+    def _on_vol_slide(self, val=None):
+        v = self._vol_var.get()
+        color = GREEN if v > 0 else (RED if v < -12 else PURPLE)
+        sign  = "+" if v > 0 else ""
+        self._vol_lbl.config(text=f"  {sign}{v:.1f} dB", fg=color)
+
+    def _preview_wav(self):
+        """Reproduz o WAV gerado com ffplay (não bloqueia a UI)."""
+        if not self._last_wav or not os.path.isfile(self._last_wav): return
+        self._stop_preview()
+        flags = subprocess.CREATE_NO_WINDOW if platform.system() == "Windows" else 0
+        try:
+            self._preview_proc = subprocess.Popen(
+                ["ffplay", "-nodisp", "-autoexit", self._last_wav],
+                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                creationflags=flags
+            )
+            self._stop_btn.config(state="normal")
+            self._status_lbl.config(text="▶ Reproduzindo…", fg=TEAL)
+            # Monitora fim da reprodução
+            def _watch():
+                if self._preview_proc:
+                    self._preview_proc.wait()
+                self.after(0, lambda: self._stop_btn.config(state="disabled"))
+                self.after(0, lambda: self._status_lbl.config(text="", fg=MUTED))
+            threading.Thread(target=_watch, daemon=True).start()
+        except FileNotFoundError:
+            messagebox.showwarning("ffplay", "ffplay não encontrado.\nInstale ffmpeg completo para usar o preview.")
+
+    def _stop_preview(self):
+        if self._preview_proc:
+            try: self._preview_proc.terminate()
+            except: pass
+            self._preview_proc = None
+        self._stop_btn.config(state="disabled")
+        self._status_lbl.config(text="", fg=MUTED)
+
+    def _copy_path(self):
+        if self._last_wav:
+            self.clipboard_clear()
+            self.clipboard_append(self._last_wav)
+            self._status_lbl.config(text="✅ Path copiado!", fg=GREEN)
+            self.after(2000, lambda: self._status_lbl.config(text="", fg=MUTED))
+
+    # ─── Geração TTS ──────────────────────────────────────────────────────────
 
     def _run_tts(self):
         if not _GTTS_OK:
@@ -986,26 +1408,43 @@ class TTSPanel(tk.Frame):
         if not text:
             messagebox.showwarning("Texto vazio", "Digite o texto que deseja transformar em voz."); return
 
-        voice   = self._voice_var.get()
-        slow    = self._slow_var.get()
-        vol_db  = self._vol_var.get()
+        voice     = self._voice_var.get()
+        rate_pre  = self._rate_var.get()
+        vol_db    = self._vol_var.get()
+        reverb    = self._reverb_var.get()
+        normalize = self._norm_var.get()
 
         self._gen_btn.config(state="disabled", text="⏳  Gerando…", bg=MUTED)
         self._status_lbl.config(text="Processando TTS…", fg=WARN)
         self._wav_info.config(text="")
+        self._preview_btn.config(state="disabled")
+        self._copy_btn.config(state="disabled")
 
         def worker():
             try:
-                wav = _generate_tts_wav(text, voice_key=voice, slow=slow, volume_db=vol_db)
-                dur = ""
+                wav = _generate_tts_wav(
+                    text, voice_key=voice, rate_preset=rate_pre,
+                    volume_db=vol_db, reverb=reverb, normalize=normalize
+                )
+                self._last_wav = wav
+                # Info de duração
+                dur_str = ""
                 try:
                     info = get_video_info(wav)
-                    dur = f"  ·  {info.get('duration', 0):.1f}s"
+                    dur_str = f"  ·  {info.get('duration', 0):.1f}s"
                 except: pass
+
+                cfg = TTS_VOICES.get(voice, {})
+                gender_icon = "♀" if cfg.get("gender") == "F" else "♂"
+
                 self.after(0, lambda: self._wav_info.config(
-                    text=f"✅ {os.path.basename(wav)}{dur}  →  {wav}", fg=TEAL))
+                    text=(f"{gender_icon}  {os.path.basename(wav)}{dur_str}\n"
+                          f"  🗂  {wav}"),
+                    fg=TEAL))
                 self.after(0, lambda: self._status_lbl.config(
-                    text="WAV pronto! Ativando no Copy White…", fg=GREEN))
+                    text="✅ WAV pronto!", fg=GREEN))
+                self.after(0, lambda: self._preview_btn.config(state="normal"))
+                self.after(0, lambda: self._copy_btn.config(state="normal"))
                 if self.on_wav_ready:
                     self.after(0, lambda: self.on_wav_ready(wav))
             except Exception as e:
@@ -1013,7 +1452,7 @@ class TTSPanel(tk.Frame):
                 self.after(0, lambda: messagebox.showerror("Erro no TTS", str(e)))
             finally:
                 self.after(0, lambda: self._gen_btn.config(
-                    state="normal", text="✨  Gerar WAV e usar no Copy White", bg=PURPLE))
+                    state="normal", text="✨  Gerar WAV", bg=PURPLE))
 
         threading.Thread(target=worker, daemon=True).start()
 
@@ -1033,22 +1472,22 @@ class TranscribeTab(tk.Frame):
         self._build()
 
     def _build(self):
-        body = tk.Frame(self, bg=DARK, padx=20, pady=16); body.pack(fill="both", expand=True)  # compactado padx 24→20, pady 20→16
+        body = tk.Frame(self, bg=DARK, padx=20, pady=16); body.pack(fill="both", expand=True)
 
-        top_card = tk.Frame(body, bg=CARD, padx=14, pady=12); top_card.pack(fill="x", pady=(0,10))  # compactado
+        top_card = tk.Frame(body, bg=CARD, padx=14, pady=12); top_card.pack(fill="x", pady=(0,10))
 
         tk.Label(top_card, text="🎬  Vídeo para transcrever",
-                 font=FONT_BOLD, bg=CARD, fg=MUTED).pack(anchor="w", pady=(0,5))  # compactado (0,6)→(0,5)
+                 font=FONT_BOLD, bg=CARD, fg=MUTED).pack(anchor="w", pady=(0,5))
         vid_row = tk.Frame(top_card, bg=CARD); vid_row.pack(fill="x")
         self._vid_entry = tk.Entry(vid_row, textvariable=self._video_path, font=FONT_MONO,
                                    bg=INPUT_BG, fg=INPUT_FG, insertbackground="black",
                                    relief="flat", bd=1)
         self._vid_entry.pack(side="left", fill="x", expand=True)
         tk.Button(vid_row, text="Escolher vídeo", font=FONT_LABEL, bg=ACCENT, fg="white",
-                  relief="flat", padx=10, pady=2, cursor="hand2",  # compactado padx 12→10
+                  relief="flat", padx=10, pady=2, cursor="hand2",
                   command=self._browse_video).pack(side="right", padx=(8,0))
 
-        opts_card = tk.Frame(body, bg=CARD, padx=14, pady=12); opts_card.pack(fill="x", pady=(0,10))  # compactado
+        opts_card = tk.Frame(body, bg=CARD, padx=14, pady=12); opts_card.pack(fill="x", pady=(0,10))
         opts_card.columnconfigure(0, weight=1); opts_card.columnconfigure(1, weight=1)
         opts_card.columnconfigure(2, weight=1)
 
@@ -1080,35 +1519,35 @@ class TranscribeTab(tk.Frame):
         tk.Label(stat_frame, text="whisper ✔" if _is_importable("whisper") else "whisper —",
                  font=FONT_SMALL, bg=CARD, fg=GREEN if _is_importable("whisper") else MUTED).pack(anchor="w")
 
-        prog_card = tk.Frame(body, bg=CARD, padx=14, pady=8); prog_card.pack(fill="x", pady=(0,10))  # compactado
+        prog_card = tk.Frame(body, bg=CARD, padx=14, pady=8); prog_card.pack(fill="x", pady=(0,10))
         prog_row = tk.Frame(prog_card, bg=CARD); prog_row.pack(fill="x")
         self._trans_btn = tk.Button(prog_row, text="▶  Transcrever",
-                                    font=("Segoe UI", 9, "bold"), bg=ACCENT, fg="white",  # font 10→9
-                                    relief="flat", padx=16, pady=6, cursor="hand2",  # compactado padx 18→16, pady 7→6
+                                    font=("Segoe UI", 9, "bold"), bg=ACCENT, fg="white",
+                                    relief="flat", padx=16, pady=6, cursor="hand2",
                                     command=self._start_transcription)
         self._trans_btn.pack(side="left")
         self._exp_txt_btn = tk.Button(prog_row, text="📄  Exportar .TXT",
                                       font=FONT_LABEL, bg=CARD2, fg=CYAN,
-                                      relief="flat", padx=10, pady=6, cursor="hand2",  # compactado padx 12→10
+                                      relief="flat", padx=10, pady=6, cursor="hand2",
                                       command=lambda: self._export("txt"), state="disabled")
         self._exp_txt_btn.pack(side="left", padx=(6,0))
         self._exp_srt_btn = tk.Button(prog_row, text="🎞  Exportar .SRT",
                                       font=FONT_LABEL, bg=CARD2, fg=TEAL,
-                                      relief="flat", padx=10, pady=6, cursor="hand2",  # compactado
+                                      relief="flat", padx=10, pady=6, cursor="hand2",
                                       command=lambda: self._export("srt"), state="disabled")
         self._exp_srt_btn.pack(side="left", padx=(6,0))
         self._clear_trans_btn = tk.Button(prog_row, text="🗑  Limpar",
                                           font=FONT_LABEL, bg="#2a1a1a", fg=RED,
-                                          relief="flat", padx=8, pady=6, cursor="hand2",  # compactado padx 10→8
+                                          relief="flat", padx=8, pady=6, cursor="hand2",
                                           command=self._clear_result)
         self._clear_trans_btn.pack(side="left", padx=(6,0))
 
         self._prog_bar = ttk.Progressbar(prog_card, mode="determinate", maximum=100)
-        self._prog_bar.pack(fill="x", pady=(6,0))  # compactado (8,0) → (6,0)
+        self._prog_bar.pack(fill="x", pady=(6,0))
         self._prog_lbl = tk.Label(prog_card, text="Aguardando…", font=FONT_STATUS, bg=CARD, fg=MUTED)
-        self._prog_lbl.pack(anchor="w", pady=(3,0))  # compactado (4,0) → (3,0)
+        self._prog_lbl.pack(anchor="w", pady=(3,0))
 
-        result_lbl_row = tk.Frame(body, bg=DARK); result_lbl_row.pack(fill="x", pady=(0,5))  # compactado (0,6)→(0,5)
+        result_lbl_row = tk.Frame(body, bg=DARK); result_lbl_row.pack(fill="x", pady=(0,5))
         tk.Label(result_lbl_row, text="📝  Transcrição", font=FONT_BOLD, bg=DARK, fg=MUTED).pack(side="left")
         self._seg_count_lbl = tk.Label(result_lbl_row, text="", font=FONT_SMALL, bg=DARK, fg=MUTED)
         self._seg_count_lbl.pack(side="left", padx=(8,0))
@@ -1130,7 +1569,7 @@ class TranscribeTab(tk.Frame):
 
         self._placeholder = tk.Label(self._res_frame,
             text="A transcrição aparecerá aqui com timestamps clicáveis…",
-            font=("Segoe UI", 10), bg=DARK, fg=MUTED, pady=30)  # font 11→10, pady 40→30
+            font=("Segoe UI", 10), bg=DARK, fg=MUTED, pady=30)
         self._placeholder.pack()
 
     def _browse_video(self):
@@ -1192,28 +1631,28 @@ class TranscribeTab(tk.Frame):
         self._exp_txt_btn.config(state="normal")
         self._exp_srt_btn.config(state="normal")
 
-        hdr = tk.Frame(self._res_frame, bg="#111118", padx=12, pady=5); hdr.pack(fill="x", pady=(0,2))  # compactado pady 6→5
-        tk.Label(hdr, text="INÍCIO", font=("Consolas", 7, "bold"), bg="#111118", fg=ACCENT, width=10, anchor="w").pack(side="left")  # font 8→7
+        hdr = tk.Frame(self._res_frame, bg="#111118", padx=12, pady=5); hdr.pack(fill="x", pady=(0,2))
+        tk.Label(hdr, text="INÍCIO", font=("Consolas", 7, "bold"), bg="#111118", fg=ACCENT, width=10, anchor="w").pack(side="left")
         tk.Label(hdr, text="FIM",    font=("Consolas", 7, "bold"), bg="#111118", fg=MUTED,  width=10, anchor="w").pack(side="left")
         tk.Label(hdr, text="TRANSCRIÇÃO", font=("Consolas", 7, "bold"), bg="#111118", fg=MUTED, anchor="w").pack(side="left")
 
         for i, seg in enumerate(segments):
             row_bg = CARD if i % 2 == 0 else "#1a1a22"
-            row = tk.Frame(self._res_frame, bg=row_bg, padx=12, pady=5, cursor="hand2")  # compactado pady 7→5
+            row = tk.Frame(self._res_frame, bg=row_bg, padx=12, pady=5, cursor="hand2")
             row.pack(fill="x", pady=(0,1))
 
             ts_start = _format_timestamp(seg["start"])
             ts_end   = _format_timestamp(seg["end"])
 
-            ts_lbl = tk.Label(row, text=ts_start, font=("Consolas", 8, "bold"),  # font 9→8
+            ts_lbl = tk.Label(row, text=ts_start, font=("Consolas", 8, "bold"),
                               bg=row_bg, fg=CYAN, width=10, anchor="w", cursor="hand2")
             ts_lbl.pack(side="left")
 
-            ts_end_lbl = tk.Label(row, text=ts_end, font=("Consolas", 8),  # font 9→8
+            ts_end_lbl = tk.Label(row, text=ts_end, font=("Consolas", 8),
                                   bg=row_bg, fg=MUTED, width=10, anchor="w")
             ts_end_lbl.pack(side="left")
 
-            text_lbl = tk.Label(row, text=seg["text"], font=("Segoe UI", 9),  # font 10→9
+            text_lbl = tk.Label(row, text=seg["text"], font=("Segoe UI", 9),
                                 bg=row_bg, fg=TEXT, anchor="w", wraplength=600, justify="left")
             text_lbl.pack(side="left", fill="x", expand=True)
 
@@ -1228,7 +1667,7 @@ class TranscribeTab(tk.Frame):
                 w.bind("<Enter>", _enter)
                 w.bind("<Leave>", _leave)
 
-        tk.Frame(self._res_frame, bg=DARK, height=14).pack()  # compactado 20→14
+        tk.Frame(self._res_frame, bg=DARK, height=14).pack()
 
     def _clear_result(self):
         self._segments = []
@@ -1279,12 +1718,12 @@ class PreviewTab(tk.Frame):
         self._build()
 
     def _build(self):
-        body = tk.Frame(self, bg=DARK, padx=20, pady=16); body.pack(fill="both", expand=True)  # compactado padx 24→20, pady 20→16
+        body = tk.Frame(self, bg=DARK, padx=20, pady=16); body.pack(fill="both", expand=True)
 
         tk.Label(body, text="🎬  Preview — Original vs Processado",
-                 font=("Segoe UI", 12, "bold"), bg=DARK, fg=TEXT).pack(anchor="w", pady=(0,12))  # font 14→12, pady (0,16)→(0,12)
+                 font=("Segoe UI", 12, "bold"), bg=DARK, fg=TEXT).pack(anchor="w", pady=(0,12))
 
-        sel_frame = tk.Frame(body, bg=CARD, padx=14, pady=12); sel_frame.pack(fill="x", pady=(0,12))  # compactado padx 16→14
+        sel_frame = tk.Frame(body, bg=CARD, padx=14, pady=12); sel_frame.pack(fill="x", pady=(0,12))
         sel_frame.columnconfigure(0, weight=1); sel_frame.columnconfigure(1, weight=1)
 
         orig_f = tk.Frame(sel_frame, bg=CARD); orig_f.grid(row=0, column=0, sticky="ew", padx=(0,8))
@@ -1313,11 +1752,11 @@ class PreviewTab(tk.Frame):
         self._orig_panel = self._make_player_panel(preview_area, 0, "📼  Original", ACCENT, "orig")
         self._proc_panel = self._make_player_panel(preview_area, 1, "✨  Processado", TEAL, "proc")
 
-        ctrl = tk.Frame(body, bg=CARD, padx=14, pady=10); ctrl.pack(fill="x")  # compactado padx 16→14, pady 12→10
+        ctrl = tk.Frame(body, bg=CARD, padx=14, pady=10); ctrl.pack(fill="x")
 
         tk.Button(ctrl, text="▶  Reproduzir Original",
                   font=FONT_BOLD, bg=ACCENT, fg="white", relief="flat",
-                  padx=12, pady=6, cursor="hand2",  # compactado padx 14→12, pady 7→6
+                  padx=12, pady=6, cursor="hand2",
                   command=lambda: self._play("orig")).pack(side="left", padx=(0,6))
 
         tk.Button(ctrl, text="▶  Reproduzir Processado",
@@ -1347,10 +1786,10 @@ class PreviewTab(tk.Frame):
     def _make_player_panel(self, parent, col, label, color, key):
         outer = tk.Frame(parent, bg="#111118", padx=2, pady=2)
         outer.grid(row=0, column=col, sticky="nsew",
-                   padx=(0,6) if col == 0 else (6,0), pady=(0,6))  # compactado (0,8)→(0,6)
-        tk.Label(outer, text=label, font=FONT_BOLD, bg="#111118", fg=color).pack(anchor="w", padx=6, pady=(4,3))  # compactado
+                   padx=(0,6) if col == 0 else (6,0), pady=(0,6))
+        tk.Label(outer, text=label, font=FONT_BOLD, bg="#111118", fg=color).pack(anchor="w", padx=6, pady=(4,3))
 
-        thumb = tk.Canvas(outer, bg="#0a0a12", width=340, height=200,  # compactado 360×220 → 340×200
+        thumb = tk.Canvas(outer, bg="#0a0a12", width=340, height=200,
                           highlightthickness=1, highlightbackground=color)
         thumb.pack(padx=6, pady=(0,6))
         thumb.create_text(170, 100, text="Nenhum vídeo\nselecionado",
@@ -1363,7 +1802,7 @@ class PreviewTab(tk.Frame):
         return {"canvas": thumb, "path_lbl": path_lbl, "key": key}
 
     def _make_info_card(self, parent, col, title):
-        card = tk.Frame(parent, bg=CARD, padx=12, pady=8)  # compactado padx 14→12, pady 10→8
+        card = tk.Frame(parent, bg=CARD, padx=12, pady=8)
         card.grid(row=0, column=col, sticky="ew",
                   padx=(0,6) if col == 0 else (6,0))
         tk.Label(card, text=title, font=FONT_BOLD, bg=CARD, fg=MUTED).pack(anchor="w", pady=(0,4))
@@ -1488,9 +1927,9 @@ class PreviewTab(tk.Frame):
 class AudioFixApp(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title("AudioFix Pro — v5.0")
-        self.geometry("940x980")          # compactado de 960×1080
-        self.minsize(800, 800)            # compactado de 820×860
+        self.title("AudioFix Pro — v5.2")
+        self.geometry("940x980")
+        self.minsize(800, 800)
         self.configure(bg=DARK)
         self.resizable(True, True)
 
@@ -1517,13 +1956,13 @@ class AudioFixApp(tk.Tk):
                 "ffmpeg não encontrado", _ffmpeg_install_hint()))
 
     def _build_ui(self):
-        hdr = tk.Frame(self, bg=PANEL, pady=10); hdr.pack(fill="x")  # compactado pady 14→10
+        hdr = tk.Frame(self, bg=PANEL, pady=10); hdr.pack(fill="x")
         title_row = tk.Frame(hdr, bg=PANEL); title_row.pack()
         tk.Label(title_row, text="AudioFix Pro", font=FONT_TITLE, bg=PANEL, fg=TEXT).pack(side="left")
-        tk.Label(title_row, text=f"  v{VERSAO_ATUAL}", font=("Segoe UI", 9), bg=PANEL, fg=ACCENT).pack(side="left", pady=(6,0))  # font 10→9
+        tk.Label(title_row, text=f"  v{VERSAO_ATUAL}", font=("Segoe UI", 9), bg=PANEL, fg=ACCENT).pack(side="left", pady=(6,0))
         tk.Label(hdr, text="Processamento em lote · Inversão de fase · Ruídos · Copy White · TTS · Transcrição · Preview",
-                 font=FONT_STATUS, bg=PANEL, fg=MUTED).pack(pady=(1,0))  # compactado (2,0)→(1,0)
-        dep_frame = tk.Frame(hdr, bg=PANEL); dep_frame.pack(pady=(4,0))  # compactado (6,0)→(4,0)
+                 font=FONT_STATUS, bg=PANEL, fg=MUTED).pack(pady=(1,0))
+        dep_frame = tk.Frame(hdr, bg=PANEL); dep_frame.pack(pady=(4,0))
         for text, color in [
             ("ffmpeg ✔" if _FFMPEG_OK else "ffmpeg ✖", GREEN if _FFMPEG_OK else RED),
             ("  |  ", MUTED),
@@ -1561,7 +2000,7 @@ class AudioFixApp(tk.Tk):
         def make_tab(name, label, icon):
             btn = tk.Button(tab_bar, text=f"{icon}  {label}", font=FONT_TAB,
                             bg="#111116", fg=MUTED, relief="flat",
-                            padx=14, pady=8, cursor="hand2",  # compactado padx 16→14, pady 10→8
+                            padx=14, pady=8, cursor="hand2",
                             command=lambda n=name: switch_tab(n))
             btn.pack(side="left")
             tab_btns[name] = btn
@@ -1589,7 +2028,7 @@ class AudioFixApp(tk.Tk):
         return nb_outer
 
     # ═══════════════════════════════════════════════════════════════════════════
-    #   PÁGINA PROCESSAR — com seções colapsáveis
+    #   PÁGINA PROCESSAR
     # ═══════════════════════════════════════════════════════════════════════════
 
     def _build_process_page(self, parent):
@@ -1603,28 +2042,28 @@ class AudioFixApp(tk.Tk):
         body_frame.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
         canvas.bind("<Configure>", lambda e: canvas.itemconfig(body_win, width=e.width))
         canvas.bind_all("<MouseWheel>", lambda e: canvas.yview_scroll(int(-1*(e.delta/120)), "units"))
-        body = tk.Frame(body_frame, bg=DARK, padx=20, pady=14); body.pack(fill="both", expand=True)  # compactado padx 24→20, pady 18→14
+        body = tk.Frame(body_frame, bg=DARK, padx=20, pady=14); body.pack(fill="both", expand=True)
         body.columnconfigure(0, weight=1)
         row_idx = 0
 
         # ── Modo entrada ─────────────────────────────────────────────────
-        mode_outer = tk.Frame(body, bg=DARK, pady=3)  # compactado pady 5→3
+        mode_outer = tk.Frame(body, bg=DARK, pady=3)
         mode_outer.grid(row=row_idx, column=0, sticky="ew", pady=(0,4)); row_idx += 1
         tk.Label(mode_outer, text="⚙️  Modo de entrada", font=FONT_BOLD, bg=DARK, fg=MUTED).pack(anchor="w", pady=(0,4))
         mc = tk.Frame(mode_outer, bg=DARK); mc.pack(fill="x")
         mc.columnconfigure(0, weight=1); mc.columnconfigure(1, weight=1)
         self._btn_single_outer = tk.Frame(mc, bg=ACCENT, padx=2, pady=2)
         self._btn_single_outer.grid(row=0, column=0, sticky="nsew", padx=(0,4))
-        self._btn_single_inner = tk.Frame(self._btn_single_outer, bg="#1a1830", padx=12, pady=10, cursor="hand2")  # compactado padx 14→12, pady 12→10
+        self._btn_single_inner = tk.Frame(self._btn_single_outer, bg="#1a1830", padx=12, pady=10, cursor="hand2")
         self._btn_single_inner.pack(fill="both", expand=True)
-        tk.Label(self._btn_single_inner, text="🎬  Um vídeo", font=("Segoe UI",10,"bold"), bg="#1a1830", fg=ACC2).pack(anchor="w")  # font 11→10
+        tk.Label(self._btn_single_inner, text="🎬  Um vídeo", font=("Segoe UI",10,"bold"), bg="#1a1830", fg=ACC2).pack(anchor="w")
         tk.Label(self._btn_single_inner, text="Selecione um arquivo\ne defina a saída manualmente",
                  font=FONT_SMALL, bg="#1a1830", fg=MUTED, justify="left").pack(anchor="w", pady=(3,0))
         self._btn_batch_outer = tk.Frame(mc, bg=MUTED, padx=2, pady=2)
         self._btn_batch_outer.grid(row=0, column=1, sticky="nsew", padx=(4,0))
-        self._btn_batch_inner = tk.Frame(self._btn_batch_outer, bg=CARD, padx=12, pady=10, cursor="hand2")  # compactado
+        self._btn_batch_inner = tk.Frame(self._btn_batch_outer, bg=CARD, padx=12, pady=10, cursor="hand2")
         self._btn_batch_inner.pack(fill="both", expand=True)
-        tk.Label(self._btn_batch_inner, text="📦  Vários vídeos (lote)", font=("Segoe UI",10,"bold"), bg=CARD, fg=TEXT).pack(anchor="w")  # font 11→10
+        tk.Label(self._btn_batch_inner, text="📦  Vários vídeos (lote)", font=("Segoe UI",10,"bold"), bg=CARD, fg=TEXT).pack(anchor="w")
         tk.Label(self._btn_batch_inner, text="Adicione múltiplos arquivos\ne processe todos em sequência",
                  font=FONT_SMALL, bg=CARD, fg=MUTED, justify="left").pack(anchor="w", pady=(3,0))
         for w in [self._btn_single_outer, self._btn_single_inner] + list(self._btn_single_inner.winfo_children()):
@@ -1633,7 +2072,7 @@ class AudioFixApp(tk.Tk):
             w.bind("<Button-1>", lambda e: self._set_input_mode("batch"))
 
         # ── Painel único ─────────────────────────────────────────────────
-        self._single_outer = tk.Frame(body, bg=DARK, pady=3)  # compactado pady 5→3
+        self._single_outer = tk.Frame(body, bg=DARK, pady=3)
         self._single_outer.grid(row=row_idx, column=0, sticky="ew", pady=(0,3)); row_idx += 1
         self._single_video  = tk.StringVar()
         self._single_output = tk.StringVar()
@@ -1642,23 +2081,23 @@ class AudioFixApp(tk.Tk):
         self._single_outer.columnconfigure(0, weight=1)
 
         # ── TTS único ─────────────────────────────────────────────────────
-        self._tts_single_outer = tk.Frame(body, bg=DARK, pady=1)  # compactado pady 2→1
+        self._tts_single_outer = tk.Frame(body, bg=DARK, pady=1)
         self._tts_single_outer.grid(row=row_idx, column=0, sticky="ew", pady=(0,3)); row_idx += 1
         self._tts_single = TTSPanel(self._tts_single_outer, on_wav_ready=self._on_tts_wav_ready, bg=DARK)
         self._tts_single.pack(fill="x")
 
         # ── Painel lote ───────────────────────────────────────────────────
-        self._batch_outer = tk.Frame(body, bg=DARK, pady=3)  # compactado pady 5→3
+        self._batch_outer = tk.Frame(body, bg=DARK, pady=3)
         self._batch_outer.grid(row=row_idx, column=0, sticky="ew", pady=(0,3)); row_idx += 1
         self.batch_queue = BatchQueuePanel(self._batch_outer)
         self.batch_queue.pack(fill="both", expand=True)
-        out_dir_card = tk.Frame(self._batch_outer, bg=CARD, padx=12, pady=8); out_dir_card.pack(fill="x", pady=(6,0))  # compactado
+        out_dir_card = tk.Frame(self._batch_outer, bg=CARD, padx=12, pady=8); out_dir_card.pack(fill="x", pady=(6,0))
         out_dir_row = tk.Frame(out_dir_card, bg=CARD); out_dir_row.pack(fill="x")
         tk.Label(out_dir_row, text="📁  Pasta de saída (lote):", font=FONT_BOLD, bg=CARD, fg=MUTED, width=22, anchor="w").pack(side="left")
         tk.Entry(out_dir_row, textvariable=self.output_dir, font=FONT_MONO, bg=INPUT_BG, fg=INPUT_FG,
                  insertbackground="black", relief="flat", bd=1).pack(side="left", fill="x", expand=True, padx=(0,6))
         tk.Button(out_dir_row, text="Escolher pasta", font=FONT_LABEL, bg=ACCENT, fg="white",
-                  relief="flat", padx=8, pady=2, cursor="hand2",  # compactado padx 10→8
+                  relief="flat", padx=8, pady=2, cursor="hand2",
                   command=self._browse_output_dir).pack(side="right")
         tk.Label(out_dir_card, text="  Deixe em branco para salvar na mesma pasta com sufixo _audiofix",
                  font=FONT_SMALL, bg=CARD, fg=MUTED).pack(anchor="w", pady=(3,0))
@@ -1694,13 +2133,13 @@ class AudioFixApp(tk.Tk):
         for w in [self._proc_orig_outer, self._proc_orig_inner] + list(self._proc_orig_inner.winfo_children()):
             w.bind("<Button-1>", lambda e: self._set_proc_mode("original"))
 
-        # ── [COMPACTO] Seção: Ruídos coloridos ────────────────────────────
+        # ── Seção: Ruídos coloridos ────────────────────────────────────────
         noise_section = CollapsibleSection(
             body, title="Mistura de ruídos coloridos", icon="🎨",
             color=PINK, default_open=True
         )
         noise_section.grid(row=row_idx, column=0, sticky="ew", pady=(0,1)); row_idx += 1
-        noise_inner = tk.Frame(noise_section.content, bg=DARK, pady=2)  # compactado pady 4→2
+        noise_inner = tk.Frame(noise_section.content, bg=DARK, pady=2)
         noise_inner.pack(fill="x", padx=0)
         noise_grid = tk.Frame(noise_inner, bg=DARK); noise_grid.pack(fill="x")
         noise_grid.columnconfigure(0, weight=1); noise_grid.columnconfigure(1, weight=1)
@@ -1708,17 +2147,17 @@ class AudioFixApp(tk.Tk):
         for idx2, name in enumerate(NOISE_GENERATORS.keys()):
             ctrl = NoiseControl(noise_grid, name=name, color=NOISE_COLORS[name], default_amp=defaults.get(name,0.0))
             ctrl.grid(row=idx2//2, column=idx2%2, sticky="ew",
-                      padx=(0,4) if idx2%2==0 else (4,0), pady=1)  # compactado pady 2→1
+                      padx=(0,4) if idx2%2==0 else (4,0), pady=1)
             self._noise_controls[name] = ctrl
         self._audio_mode_widgets.append(noise_section)
 
-        # ── [COMPACTO] Seção: Copy White ──────────────────────────────────
+        # ── Seção: Copy White ──────────────────────────────────────────────
         cw_section = CollapsibleSection(
             body, title="Copy White — sobreposição de áudio externo", icon="📻",
             color=CYAN, default_open=True
         )
         cw_section.grid(row=row_idx, column=0, sticky="ew", pady=(0,1)); row_idx += 1
-        cw_inner = tk.Frame(cw_section.content, bg=DARK, pady=3)  # compactado pady 4→3
+        cw_inner = tk.Frame(cw_section.content, bg=DARK, pady=3)
         cw_inner.pack(fill="x")
 
         cw_hdr = tk.Frame(cw_inner, bg=DARK); cw_hdr.pack(fill="x", pady=(0,3))
@@ -1727,7 +2166,7 @@ class AudioFixApp(tk.Tk):
                        command=self._toggle_cw).pack(side="left")
         tk.Label(cw_hdr, text="Ativar Copy White", font=FONT_BOLD, bg=DARK, fg=CYAN).pack(side="left")
 
-        self.cw_card = tk.Frame(cw_inner, bg=CARD, padx=12, pady=10)  # compactado padx 14→12, pady 12→10
+        self.cw_card = tk.Frame(cw_inner, bg=CARD, padx=12, pady=10)
         self.cw_card.pack(fill="x")
         file_row_cw = tk.Frame(self.cw_card, bg=CARD); file_row_cw.pack(fill="x", pady=(0,6))
         tk.Label(file_row_cw, text="Áudio WAV:", font=FONT_BOLD, bg=CARD, fg=MUTED, width=12, anchor="w").pack(side="left")
@@ -1735,7 +2174,7 @@ class AudioFixApp(tk.Tk):
                                  bg=INPUT_BG, fg=INPUT_FG, insertbackground="black", relief="flat", bd=1)
         self.cw_entry.pack(side="left", fill="x", expand=True, padx=(0,6))
         tk.Button(file_row_cw, text="Escolher WAV", font=FONT_LABEL, bg=CYAN, fg=DARK,
-                  relief="flat", padx=8, pady=2, cursor="hand2",  # compactado padx 10→8
+                  relief="flat", padx=8, pady=2, cursor="hand2",
                   command=self._browse_cw).pack(side="right")
         gain_row = tk.Frame(self.cw_card, bg=CARD); gain_row.pack(fill="x")
         tk.Label(gain_row, text="Ganho mix:", font=FONT_BOLD, bg=CARD, fg=MUTED, width=12, anchor="w").pack(side="left")
@@ -1747,7 +2186,7 @@ class AudioFixApp(tk.Tk):
         self._toggle_cw()
         self._audio_mode_widgets.append(cw_section)
 
-        # ── [COMPACTO] Seção: DCB ─────────────────────────────────────────
+        # ── Seção: DCB ─────────────────────────────────────────────────────
         dcb_section = CollapsibleSection(
             body, title="DCB — Dynamic Compression Boost", icon="🎚",
             color=GOLD, default_open=False
@@ -1771,7 +2210,7 @@ class AudioFixApp(tk.Tk):
         self._toggle_dcb()
         self._audio_mode_widgets.append(dcb_section)
 
-        # ── [COMPACTO] Seção: Variações de metadados ──────────────────────
+        # ── Seção: Variações de metadados ──────────────────────────────────
         var_section = CollapsibleSection(
             body, title="Variações de metadados", icon="🎲",
             color=WARN, default_open=False
@@ -1781,11 +2220,11 @@ class AudioFixApp(tk.Tk):
         var_inner.pack(fill="x")
         var_card = tk.Frame(var_inner, bg=CARD, padx=12, pady=10); var_card.pack(fill="x")
         spin_frame = tk.Frame(var_card, bg=CARD); spin_frame.pack(fill="x")
-        self.var_minus_btn = tk.Button(spin_frame, text="  −  ", font=("Segoe UI",11,"bold"),  # font 12→11
+        self.var_minus_btn = tk.Button(spin_frame, text="  −  ", font=("Segoe UI",11,"bold"),
                                        bg="#2a1a1a", fg=RED, relief="flat", cursor="hand2",
-                                       padx=5, pady=3, command=self._decrement_variants)  # compactado padx 6→5, pady 4→3
+                                       padx=5, pady=3, command=self._decrement_variants)
         self.var_minus_btn.pack(side="left")
-        self.var_display = tk.Label(spin_frame, text="0", font=("Segoe UI",12,"bold"),  # font 14→12
+        self.var_display = tk.Label(spin_frame, text="0", font=("Segoe UI",12,"bold"),
                                     bg=CARD, fg=TEXT, width=4, anchor="center")
         self.var_display.pack(side="left", padx=4)
         self.var_plus_btn = tk.Button(spin_frame, text="  +  ", font=("Segoe UI",11,"bold"),
@@ -1795,7 +2234,7 @@ class AudioFixApp(tk.Tk):
         self.var_hint = tk.Label(spin_frame, text="sem variações", font=FONT_SMALL, bg=CARD, fg=MUTED)
         self.var_hint.pack(side="left", padx=(8,0))
         self.n_variants.trace_add("write", lambda *_: self._sync_var_display())
-        tk.Frame(var_card, bg=MUTED, height=1).pack(fill="x", pady=(8,6))  # compactado (10,8)→(8,6)
+        tk.Frame(var_card, bg=MUTED, height=1).pack(fill="x", pady=(8,6))
         self.variation_level_selector = VariationLevelSelector(var_card)
         self.variation_level_selector.pack(fill="x")
 
@@ -1808,7 +2247,7 @@ class AudioFixApp(tk.Tk):
         self.global_status = tk.Label(prog_card, text="Aguardando…", font=FONT_STATUS, bg=CARD, fg=MUTED)
         self.global_status.pack(anchor="w", pady=(3,0))
 
-        # ── [COMPACTO] Seção: Log de processamento ────────────────────────
+        # ── Seção: Log de processamento ────────────────────────────────────
         log_section = CollapsibleSection(
             body, title="Log de processamento", icon="📋",
             color=INDIGO, default_open=False
@@ -1819,7 +2258,7 @@ class AudioFixApp(tk.Tk):
         log_card = tk.Frame(log_inner, bg=CARD, padx=12, pady=8); log_card.pack(fill="both", expand=True)
         log_grid = tk.Frame(log_card, bg=CARD); log_grid.pack(fill="both", expand=True)
         log_grid.rowconfigure(0, weight=1); log_grid.columnconfigure(0, weight=1)
-        self.log_box = tk.Text(log_grid, height=7, font=FONT_MONO, bg="#111116", fg="#a0a0b8",  # height 8→7
+        self.log_box = tk.Text(log_grid, height=7, font=FONT_MONO, bg="#111116", fg="#a0a0b8",
                                insertbackground=TEXT, relief="flat", state="disabled", wrap="word")
         self.log_box.grid(row=0, column=0, sticky="nsew")
         sb2 = ttk.Scrollbar(log_grid, command=self.log_box.yview); sb2.grid(row=0, column=1, sticky="ns")
@@ -1827,32 +2266,31 @@ class AudioFixApp(tk.Tk):
         self._log_section = log_section
 
         # ── Botões de ação ────────────────────────────────────────────────
-        # NOTA: botão "📝 Transcrever vídeo" removido (duplicado — aba já existe)
-        btn_frame = tk.Frame(body, bg=DARK, pady=10)  # compactado pady 14→10
+        btn_frame = tk.Frame(body, bg=DARK, pady=10)
         btn_frame.grid(row=row_idx, column=0, sticky="ew", pady=(0,3)); row_idx += 1
 
-        self.run_btn = tk.Button(btn_frame, text="▶  PROCESSAR", font=("Segoe UI",10,"bold"),  # font 11→10
+        self.run_btn = tk.Button(btn_frame, text="▶  PROCESSAR", font=("Segoe UI",10,"bold"),
                                  bg=ACCENT, fg="white", activebackground=ACC2, activeforeground="white",
-                                 relief="flat", padx=24, pady=8, cursor="hand2",  # compactado padx 28→24, pady 10→8
+                                 relief="flat", padx=24, pady=8, cursor="hand2",
                                  command=self._start_processing)
         self.run_btn.pack(side="right")
 
         self.cancel_btn = tk.Button(btn_frame, text="⏹  Cancelar lote", font=("Segoe UI",10,"bold"),
-                                    bg="#2a1a1a", fg=RED, relief="flat", padx=16, pady=8,  # compactado padx 18→16, pady 10→8
+                                    bg="#2a1a1a", fg=RED, relief="flat", padx=16, pady=8,
                                     cursor="hand2", state="disabled", command=self._cancel_batch)
         self.cancel_btn.pack(side="right", padx=(0,6))
 
         tk.Button(btn_frame, text="🗑  Limpar log", font=FONT_LABEL, bg=CARD, fg=MUTED,
-                  relief="flat", padx=12, pady=8, cursor="hand2",  # compactado padx 14→12, pady 10→8
+                  relief="flat", padx=12, pady=8, cursor="hand2",
                   command=self._clear_log).pack(side="right", padx=(0,6))
 
         # ── Estilos ttk ───────────────────────────────────────────────────
         style = ttk.Style(self); style.theme_use("clam")
         style.configure("Horizontal.TProgressbar", troughcolor=PANEL, background=ACCENT,
-                        thickness=8, bordercolor=DARK, lightcolor=ACCENT)  # thickness 10→8
+                        thickness=8, bordercolor=DARK, lightcolor=ACCENT)
         style.configure("Vertical.TScrollbar", troughcolor="#111116", background=MUTED,
                         arrowcolor=MUTED, bordercolor=DARK)
-        style.configure("TScale", background=CARD, troughcolor=PANEL, sliderthickness=14)  # sliderthickness 16→14
+        style.configure("TScale", background=CARD, troughcolor=PANEL, sliderthickness=14)
         style.configure("TCombobox", fieldbackground=INPUT_BG, background=INPUT_BG,
                         foreground=INPUT_FG, selectbackground=ACCENT)
 
@@ -1872,18 +2310,18 @@ class AudioFixApp(tk.Tk):
     # ── Helpers de UI ─────────────────────────────────────────────────────────
 
     def _file_row_widget(self, parent, grid_row, label, var, cmd, placeholder):
-        outer = tk.Frame(parent, bg=DARK, pady=2)  # compactado pady 3→2
+        outer = tk.Frame(parent, bg=DARK, pady=2)
         outer.grid(row=grid_row, column=0, sticky="ew", pady=(0,3))
         tk.Label(outer, text=label, font=FONT_BOLD, bg=DARK, fg=MUTED).pack(anchor="w", pady=(0,3))
-        card = tk.Frame(outer, bg=CARD, padx=12, pady=8); card.pack(fill="x")  # compactado padx 14→12, pady 10→8
+        card = tk.Frame(outer, bg=CARD, padx=12, pady=8); card.pack(fill="x")
         tk.Entry(card, textvariable=var, font=FONT_MONO, bg=INPUT_BG, fg=INPUT_FG,
                  insertbackground="black", relief="flat", bd=1).pack(side="left", fill="x", expand=True)
         tk.Button(card, text="Escolher", font=FONT_LABEL, bg=ACCENT, fg="white",
-                  activebackground=ACC2, relief="flat", padx=8, pady=2, cursor="hand2",  # compactado padx 10→8
+                  activebackground=ACC2, relief="flat", padx=8, pady=2, cursor="hand2",
                   command=cmd).pack(side="right", padx=(8,0))
 
     def _dcb_slider_row(self, parent, label, var, from_, to, fmt, color):
-        row = tk.Frame(parent, bg=CARD, pady=2); row.pack(fill="x")  # compactado pady 3→2
+        row = tk.Frame(parent, bg=CARD, pady=2); row.pack(fill="x")
         tk.Label(row, text=label, font=FONT_BOLD, bg=CARD, fg=MUTED, width=14, anchor="w").pack(side="left")
         val_lbl = tk.Label(row, text=fmt.format(var.get()), font=FONT_BOLD, bg=CARD, fg=color, width=8)
         val_lbl.pack(side="right")
@@ -2206,7 +2644,7 @@ _TEAL_S   = "#14b8a6"
 _PURPLE_S = "#c084fc"
 
 class SplashScreen(tk.Tk):
-    WIDTH = 520; HEIGHT = 320  # compactado 560×360 → 520×320
+    WIDTH = 520; HEIGHT = 320
     def __init__(self):
         super().__init__()
         self.overrideredirect(True); self.configure(bg=_DARK_S)
@@ -2233,30 +2671,30 @@ class SplashScreen(tk.Tk):
             self.canvas.create_rectangle(
                 0, int(i*self.HEIGHT/steps), self.WIDTH, int((i+1)*self.HEIGHT/steps),
                 fill=f"#{r:02x}{g:02x}{b:02x}", outline="")
-        cx, cy = self.WIDTH//2, 105; r = 44  # compactado cy 120→105, r 50→44
+        cx, cy = self.WIDTH//2, 105; r = 44
         self._ring1 = self.canvas.create_arc(cx-r, cy-r, cx+r, cy+r, start=0, extent=300,
-                                             outline=_ACCENT_S, width=4, style="arc")  # width 5→4
+                                             outline=_ACCENT_S, width=4, style="arc")
         self._ring2 = self.canvas.create_arc(cx-r+5, cy-r+5, cx+r-5, cy+r-5, start=60, extent=200,
                                              outline=_PURPLE_S, width=2, style="arc")
         self._ring3 = self.canvas.create_arc(cx-r+12, cy-r+12, cx+r-12, cy+r-12, start=120, extent=240,
                                              outline=_TEAL_S, width=1, style="arc")
-        self.canvas.create_text(cx, cy, text="🎛️", font=("Segoe UI Emoji", 22), fill=_TEXT_S)  # font 26→22
-        self.canvas.create_text(self.WIDTH//2, 168, text="AudioFix Pro",  # y 185→168
-                                font=("Segoe UI", 17, "bold"), fill=_TEXT_S)  # font 20→17
-        self.canvas.create_text(self.WIDTH//2, 188,  # y 207→188
+        self.canvas.create_text(cx, cy, text="🎛️", font=("Segoe UI Emoji", 22), fill=_TEXT_S)
+        self.canvas.create_text(self.WIDTH//2, 168, text="AudioFix Pro",
+                                font=("Segoe UI", 17, "bold"), fill=_TEXT_S)
+        self.canvas.create_text(self.WIDTH//2, 188,
                                 text=f"v{VERSAO_ATUAL}  ·  TTS · Transcrição · Preview · Lote",
-                                font=("Segoe UI", 8), fill=_MUTED_S)  # font 9→8
-        bx1, by1, bx2, by2 = 55, 210, self.WIDTH-55, 222  # compactado
+                                font=("Segoe UI", 8), fill=_MUTED_S)
+        bx1, by1, bx2, by2 = 55, 210, self.WIDTH-55, 222
         self.canvas.create_rectangle(bx1, by1, bx2, by2, fill=_PANEL_S, outline=_CARD_S, width=1)
         self._bx1 = bx1; self._by1 = by1; self._bx2 = bx2; self._by2 = by2; self._bw = bx2-bx1
         self._bar_fill = self.canvas.create_rectangle(bx1, by1, bx1, by2, fill=_ACCENT_S, outline="")
-        self._pct_txt  = self.canvas.create_text(self.WIDTH//2, 232, text="0%",  # y 258→232
+        self._pct_txt  = self.canvas.create_text(self.WIDTH//2, 232, text="0%",
                                                   font=("Segoe UI", 8, "bold"), fill=_ACCENT_S)
-        self._step_txt = self.canvas.create_text(self.WIDTH//2, 248, text="Iniciando…",  # y 276→248
+        self._step_txt = self.canvas.create_text(self.WIDTH//2, 248, text="Iniciando…",
                                                   font=("Segoe UI", 8), fill=_MUTED_S)
         self.canvas.create_text(self.WIDTH//2, self.HEIGHT-10,
                                 text=f"Python + ffmpeg  ·  v{VERSAO_ATUAL}  ·  © 2025 AudioFix",
-                                font=("Segoe UI", 7), fill=_MUTED_S)  # font 8→7
+                                font=("Segoe UI", 7), fill=_MUTED_S)
         self.canvas.create_rectangle(0, 0, self.WIDTH, 3, fill=_ACCENT_S, outline="")
         self.canvas.create_rectangle(0, self.HEIGHT-3, self.WIDTH, self.HEIGHT, fill=_TEAL_S, outline="")
 
@@ -2299,7 +2737,7 @@ def _run_loading(splash: SplashScreen):
         splash.after(0, lambda: splash.update_progress(pct, label))
         if delay: time.sleep(delay)
 
-    step(0,   "Iniciando AudioFix Pro v5.0…",  0.15)
+    step(0,   "Iniciando AudioFix Pro v5.2…",  0.15)
     step(10,  "Verificando Python 3.8+…",       0.1)
     if sys.version_info < (3,8): sys.exit(1)
     step(25,  "Carregando numpy / scipy…",      0.1)
