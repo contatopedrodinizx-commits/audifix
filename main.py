@@ -16,7 +16,7 @@ import tkinter as tk
 from tkinter import ttk, filedialog, messagebox, font as tkfont
 
 # ─── Versão ───────────────────────────────────────────────────────────────────
-VERSAO_ATUAL = "5.4"
+VERSAO_ATUAL = "5.5"
 GITHUB_REPO  = "contatopedrodinizx-commits/audifix"
 URL_DOWNLOAD = f"https://github.com/{GITHUB_REPO}/releases/latest"
 
@@ -387,12 +387,6 @@ class UpdateDialog(tk.Toplevel):
 
 
 def verificar_atualizacao(parent_window, silencioso: bool = True):
-    """
-    Verifica se há uma nova versão no GitHub.
-    - silencioso=True : não mostra nada se já estiver na versão mais recente
-    - silencioso=False: mostra aviso mesmo se estiver atualizado
-    Deve ser chamado em thread separada para não travar a UI.
-    """
     def _worker():
         dados = _buscar_ultima_versao_github()
         if dados is None:
@@ -417,19 +411,43 @@ def verificar_atualizacao(parent_window, silencioso: bool = True):
                 ))
             return
 
-        # Procura asset .py na release
+        # ── Tenta achar asset .py na release ──────────────────────────────
         assets     = dados.get("assets", [])
         asset_url  = None
-        asset_name = None
         for a in assets:
             nome = a.get("name", "")
             if nome.lower().endswith(".py"):
-                asset_url  = a.get("browser_download_url")
-                asset_name = nome
+                asset_url = a.get("browser_download_url")
                 break
 
+        # ── Fallback: raw do GitHub (branch main ou master) ───────────────
         if not asset_url:
-            # Sem asset .py: direciona para a página da release
+            script_name = os.path.basename(
+                sys.argv[0] if sys.argv[0].endswith(".py") else __file__
+            )
+            # Tenta main, depois master
+            for branch in ("main", "master"):
+                candidate = (
+                    f"https://raw.githubusercontent.com/{GITHUB_REPO}"
+                    f"/refs/heads/{branch}/{script_name}"
+                )
+                try:
+                    import urllib.request
+                    req = urllib.request.Request(
+                        candidate,
+                        headers={"User-Agent": f"AudioFix/{VERSAO_ATUAL}"}
+                    )
+                    with urllib.request.urlopen(req, timeout=10) as resp:
+                        # Verifica se parece um script Python válido
+                        preview = resp.read(300).decode("utf-8", errors="replace")
+                        if "VERSAO_ATUAL" in preview or "import" in preview:
+                            asset_url = candidate
+                            break
+                except Exception:
+                    continue
+
+        # ── Se ainda sem URL, abre navegador como último recurso ──────────
+        if not asset_url:
             def _sem_asset():
                 ir = messagebox.askyesno(
                     "Atualização disponível",
@@ -443,7 +461,7 @@ def verificar_atualizacao(parent_window, silencioso: bool = True):
             parent_window.after(0, _sem_asset)
             return
 
-        # Determina o caminho do script atual
+        # ── Mostra diálogo de atualização com download integrado ──────────
         script_path = os.path.abspath(
             sys.argv[0] if sys.argv[0].endswith(".py")
             else __file__
