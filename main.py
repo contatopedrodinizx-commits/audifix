@@ -16,7 +16,7 @@ import tkinter as tk
 from tkinter import ttk, filedialog, messagebox, font as tkfont
 
 # ─── Versão ───────────────────────────────────────────────────────────────────
-VERSAO_ATUAL = "5.5"
+VERSAO_ATUAL = "5.6"
 GITHUB_REPO  = "contatopedrodinizx-commits/audifix"
 URL_DOWNLOAD = f"https://github.com/{GITHUB_REPO}/releases/latest"
 
